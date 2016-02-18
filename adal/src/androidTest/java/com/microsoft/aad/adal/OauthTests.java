@@ -599,8 +599,12 @@ public class OauthTests extends InstrumentationTestCase {
         m.invoke(oauth, mockResponse);
 
         // verify same token
-        assertTrue("Log response has message",
-                logResponse2.errorCode.equals(ADALError.CORRELATION_ID_FORMAT));
+        try {
+            m.invoke(oauth, mockResponse);
+        } catch (InvocationTargetException e) {
+            assertTrue("Unexpected exception",
+                    IllegalArgumentException.class.equals(e.getCause().getClass()));
+        }
     }
 
     @SmallTest
