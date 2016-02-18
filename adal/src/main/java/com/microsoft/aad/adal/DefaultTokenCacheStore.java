@@ -162,6 +162,7 @@ public class DefaultTokenCacheStore implements ITokenCacheStore, ITokenStoreQuer
             prefsEditor.remove(key);
             // apply will do Async disk write operation.
             prefsEditor.apply();
+            Logger.e(TAG, "removeItem for key" + key, " removed tokens", ADALError.AUTH_FAILED);
         }
     }
 
@@ -186,6 +187,7 @@ public class DefaultTokenCacheStore implements ITokenCacheStore, ITokenStoreQuer
 
             // apply will do Async disk write operation.
             prefsEditor.apply();
+            Logger.d(TAG, "setItem for key" + key);
         } else {
             Logger.e(TAG, "Encrypted output is null", "", ADALError.ENCRYPTION_FAILED);
         }
@@ -193,7 +195,7 @@ public class DefaultTokenCacheStore implements ITokenCacheStore, ITokenStoreQuer
 
     @Override
     public void removeAll() {
-
+        Logger.e(TAG, "removeAll", " removed all tokens", ADALError.AUTH_FAILED);
         argumentCheck();
         Editor prefsEditor = mPrefs.edit();
         prefsEditor.clear();
