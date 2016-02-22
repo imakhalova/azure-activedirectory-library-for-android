@@ -35,6 +35,7 @@ import java.util.GregorianCalendar;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.NoSuchPaddingException;
@@ -86,6 +87,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
      * Check case-insensitive lookup
      */
     private static final String VALID_AUTHORITY = "https://Login.windows.net/Omercantest.Onmicrosoft.com";
+    private static final String INVALID_AUTHORITY = "https://Login.windows.net/invalid.Onmicrosoft.com";
 
     protected final static int CONTEXT_REQUEST_TIME_OUT = 3000;
 
@@ -624,6 +626,36 @@ public class AuthenticationContextTest extends AndroidTestCase {
     }
 
     @SmallTest
+    public void testAcquireTokenByRefreshToken_InvalidAuthority()
+            throws NoSuchFieldException, NoSuchAlgorithmException, NoSuchPaddingException{
+        FileMockContext mockContext = new FileMockContext(getContext());
+        final AuthenticationContext context = new AuthenticationContext(mockContext,
+                INVALID_AUTHORITY, true);
+        try {
+            context.acquireTokenSilentSync("refresh", "clientId", "resource");
+        } catch (AuthenticationException e) {
+            assertNotNull(e);
+        }
+
+        try {
+            context.acquireTokenSilent("refresh", "clientId", "resource", new AuthenticationCallback<AuthenticationResult>() {
+                @Override
+                public void onSuccess(AuthenticationResult result) {
+
+                }
+
+                @Override
+                public void onError(Exception exc) {
+
+                }
+            });
+        } catch (AuthenticationException e) {
+            assertNotNull(e);
+        }
+
+    }
+
+    @SmallTest
     public void testAcquireTokenByRefreshToken_ConnectionNotAvailable()
             throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException,
             NoSuchAlgorithmException, NoSuchPaddingException, InterruptedException {
@@ -888,7 +920,6 @@ public class AuthenticationContextTest extends AndroidTestCase {
         context.acquireToken(testActivity, "resource", "clientid", "redirectUri", "userid",
                 callback);
         signal.await(CONTEXT_REQUEST_TIME_OUT, TimeUnit.MILLISECONDS);
-
         // Check response in callback result
         assertNotNull("Error is not null", callback.mException);
         assertEquals("NOT_VALID_URL", ADALError.DEVELOPER_AUTHORITY_IS_NOT_VALID_INSTANCE,
@@ -2048,6 +2079,9 @@ public class AuthenticationContextTest extends AndroidTestCase {
         @Override
         public boolean isValidAuthority(URL authorizationEndpoint) {
             authorizationUrl = authorizationEndpoint;
+            if(!isValid) {
+                throw new AuthenticationException(ADALError.DISCOVERY_NOT_SUPPORTED);
+            }
             return isValid;
         }
 
