@@ -596,12 +596,10 @@ public class OauthTests extends InstrumentationTestCase {
         logResponse2.listenLogForMessageSegments(null, "Wrong format of the correlation ID:");
 
         // send call with mocks
-        m.invoke(oauth, mockResponse);
-
-        // verify same token
         try {
             m.invoke(oauth, mockResponse);
         } catch (InvocationTargetException e) {
+            // verify error
             assertTrue("Unexpected exception",
                     IllegalArgumentException.class.equals(e.getCause().getClass()));
         }
