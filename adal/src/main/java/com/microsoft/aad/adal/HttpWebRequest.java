@@ -182,8 +182,9 @@ class HttpWebRequest {
                 Logger.v(TAG, "Response is received");
                 response.setBody(responseBody);
                 response.setResponseHeaders(mConnection.getHeaderFields());
-            } catch (InterruptedException ignore) {
-                Logger.v(TAG, "Thread.sleep got interrupted exception " + ignore);
+            } catch (InterruptedException e) {
+                Logger.v(TAG, "Thread.sleep got interrupted exception " + e);
+                mException = e;
             } catch (IOException e ) {
                 Logger.e(TAG, "IOException:" + e.getMessage(), " Method:" + mRequestMethod,
                         ADALError.SERVER_ERROR, e);
