@@ -138,7 +138,7 @@ class HttpWebRequest {
                 mConnection.setUseCaches(mUseCaches);
                 mConnection.setRequestMethod(mRequestMethod);
                 mConnection.setDoInput(true); // it will at least read status
-                // code. Default is true.
+                                              // code. Default is true.
                 setRequestBody();
 
                 byte[] responseBody = null;
