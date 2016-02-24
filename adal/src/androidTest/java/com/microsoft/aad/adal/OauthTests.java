@@ -95,7 +95,7 @@ public class OauthTests extends InstrumentationTestCase {
         assertEquals("idpProvider", ReflectionUtils.getFieldValue(actual, "mIdentityProvider"));
         assertEquals("53c6acf2-2742-4538-918d-e78257ec8516",
                 ReflectionUtils.getFieldValue(actual, "mObjectId"));
-        assertTrue(1387227772 == (Long)ReflectionUtils.getFieldValue(actual, "mPasswordExpiration"));
+        assertTrue(1387227772 == (Long) ReflectionUtils.getFieldValue(actual, "mPasswordExpiration"));
         assertEquals("pwdUrl", ReflectionUtils.getFieldValue(actual, "mPasswordChangeUrl"));
     }
 
@@ -596,13 +596,16 @@ public class OauthTests extends InstrumentationTestCase {
         logResponse2.listenLogForMessageSegments(null, "Wrong format of the correlation ID:");
 
         // send call with mocks
+        Throwable throwable = null;
         try {
             m.invoke(oauth, mockResponse);
         } catch (InvocationTargetException e) {
             // verify error
             assertTrue("Unexpected exception",
                     IllegalArgumentException.class.equals(e.getCause().getClass()));
+            throwable = e.getCause();
         }
+        assertNotNull(throwable);
     }
 
     @SmallTest
