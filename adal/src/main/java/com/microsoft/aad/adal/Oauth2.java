@@ -615,13 +615,18 @@ class Oauth2 {
 
         // Set correlationId in the result
         if (correlationIdInHeader != null && !correlationIdInHeader.isEmpty()) {
-            UUID correlation = UUID.fromString(correlationIdInHeader);
-            if (!correlation.equals(mRequest.getCorrelationId())) {
-                Logger.w(TAG, "CorrelationId is not matching", "",
-                        ADALError.CORRELATION_ID_NOT_MATCHING_REQUEST_RESPONSE);
+            try {
+                UUID correlation = UUID.fromString(correlationIdInHeader);
+                if (!correlation.equals(mRequest.getCorrelationId())) {
+                    Logger.w(TAG, "CorrelationId is not matching", "",
+                            ADALError.CORRELATION_ID_NOT_MATCHING_REQUEST_RESPONSE);
+                }
+                Logger.v(TAG, "Response correlationId:" + correlationIdInHeader);
+            } catch (IllegalArgumentException ex) {
+                Logger.e(TAG, "CorrelationId is malformed: " + correlationIdInHeader, "",
+                        ADALError.CORRELATION_ID_FORMAT);
             }
 
-            Logger.v(TAG, "Response correlationId:" + correlationIdInHeader);
         }
 
         return result;
