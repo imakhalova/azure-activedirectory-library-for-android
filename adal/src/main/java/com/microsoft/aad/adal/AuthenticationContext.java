@@ -797,7 +797,7 @@ public class AuthenticationContext {
                         // immediately to
                         // UI thread. All UI
                         // related actions will be performed using the Handler.
-                        sThreadExecutor.submit(new Runnable() {
+                        sThreadExecutor.execute(new Runnable() {
 
                             @Override
                             public void run() {
@@ -832,12 +832,12 @@ public class AuthenticationContext {
 
                                 try {
                                     if (result != null) {
-                                    	if (!StringExtensions.IsNullOrBlank(result.getErrorCode())) {
-                                    		Logger.e(TAG, result.getErrorLogInfo(), null, ADALError.AUTH_FAILED);
-                                    		callbackHandle.onError(new AuthenticationException(ADALError.AUTH_FAILED,
-                                    				result.getErrorLogInfo()));
-                                    		return;
-                                    	}
+                                        if (!StringExtensions.IsNullOrBlank(result.getErrorCode())) {
+                                            Logger.e(TAG, result.getErrorLogInfo(), null, ADALError.AUTH_FAILED);
+                                            callbackHandle.onError(new AuthenticationException(ADALError.AUTH_FAILED,
+                                                    result.getErrorLogInfo()));
+                                            return;
+                                        }
                                         Logger.v(TAG,
                                                 "OnActivityResult is setting the token to cache. "
                                                         + authenticationRequest.getLogInfo());
@@ -1816,7 +1816,7 @@ public class AuthenticationContext {
 
         // Execute all the calls inside Runnable to return immediately. All UI
         // related actions will be performed using Handler.
-        sThreadExecutor.submit(new Runnable() {
+        sThreadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 final URL authorityUrl = StringExtensions.getUrl(mAuthority);
