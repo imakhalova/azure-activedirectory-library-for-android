@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -315,7 +314,7 @@ public class AuthenticationContext {
      * @param loginHint Optional login hint
      * @param callback required
      */
-    public Future<?> acquireToken(Activity activity, String resource, String clientId,
+    public void acquireToken(Activity activity, String resource, String clientId,
             String redirectUri, String loginHint,
             AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -326,7 +325,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, loginHint, PromptBehavior.Auto, null,
                 getRequestCorrelationId());
         request.setUserIdentifierType(UserIdentifierType.LoginHint);
-        return acquireTokenLocal(wrapActivity(activity), false, request, callback);
+        acquireTokenLocal(wrapActivity(activity), false, request, callback);
     }
 
     /**
@@ -350,7 +349,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(Activity activity, String resource, String clientId,
+    public void acquireToken(Activity activity, String resource, String clientId,
             String redirectUri, String loginHint, String extraQueryParameters,
             AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -361,7 +360,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, loginHint, PromptBehavior.Auto, extraQueryParameters,
                 getRequestCorrelationId());
         request.setUserIdentifierType(UserIdentifierType.LoginHint);
-        return acquireTokenLocal(wrapActivity(activity), false, request, callback);
+        acquireTokenLocal(wrapActivity(activity), false, request, callback);
     }
 
     /**
@@ -382,7 +381,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(Activity activity, String resource, String clientId,
+    public void acquireToken(Activity activity, String resource, String clientId,
             String redirectUri, PromptBehavior prompt,
             AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -391,7 +390,7 @@ public class AuthenticationContext {
         final AuthenticationRequest request = new AuthenticationRequest(mAuthority, resource,
                 clientId, redirectUri, null, prompt, null, getRequestCorrelationId());
 
-        return acquireTokenLocal(wrapActivity(activity), false, request, callback);
+        acquireTokenLocal(wrapActivity(activity), false, request, callback);
     }
 
     /**
@@ -412,7 +411,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(Activity activity, String resource, String clientId,
+    public void acquireToken(Activity activity, String resource, String clientId,
             String redirectUri, PromptBehavior prompt, String extraQueryParameters,
             AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -422,7 +421,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, null, prompt, extraQueryParameters,
                 getRequestCorrelationId());
 
-        return acquireTokenLocal(wrapActivity(activity), false, request, callback);
+        acquireTokenLocal(wrapActivity(activity), false, request, callback);
     }
 
     /**
@@ -445,7 +444,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(Activity activity, String resource, String clientId,
+    public void acquireToken(Activity activity, String resource, String clientId,
             String redirectUri, String loginHint, PromptBehavior prompt,
             String extraQueryParameters, AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -455,7 +454,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, loginHint, prompt, extraQueryParameters,
                 getRequestCorrelationId());
         request.setUserIdentifierType(UserIdentifierType.LoginHint);
-        return acquireTokenLocal(wrapActivity(activity), false, request, callback);
+        acquireTokenLocal(wrapActivity(activity), false, request, callback);
     }
 
     /**
@@ -477,7 +476,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(IWindowComponent fragment, String resource, String clientId,
+    public void acquireToken(IWindowComponent fragment, String resource, String clientId,
             String redirectUri, String loginHint, PromptBehavior prompt,
             String extraQueryParameters, AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -487,7 +486,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, loginHint, prompt, extraQueryParameters,
                 getRequestCorrelationId());
         request.setUserIdentifierType(UserIdentifierType.LoginHint);
-        return acquireTokenLocal(fragment, false, request, callback);
+        acquireTokenLocal(fragment, false, request, callback);
     }
 
     /**
@@ -510,7 +509,7 @@ public class AuthenticationContext {
      * @param callback required {@link AuthenticationCallback} object for async
      *            call.
      */
-    public Future<?> acquireToken(String resource, String clientId, String redirectUri,
+    public void acquireToken(String resource, String clientId, String redirectUri,
             String loginHint, PromptBehavior prompt, String extraQueryParameters,
             AuthenticationCallback<AuthenticationResult> callback) {
 
@@ -520,7 +519,7 @@ public class AuthenticationContext {
                 clientId, redirectUri, loginHint, prompt, extraQueryParameters,
                 getRequestCorrelationId());
         request.setUserIdentifierType(UserIdentifierType.LoginHint);
-        return acquireTokenLocal(null, true, request, callback);
+        acquireTokenLocal(null, true, request, callback);
     }
 
     private IWindowComponent wrapActivity(final Activity activity) {
@@ -577,32 +576,14 @@ public class AuthenticationContext {
      */
     public AuthenticationResult acquireTokenSilentSync(String resource, String clientId,
             String userId) {
-        final AuthenticationResult[] acquireTokenSilentSyncResult = new AuthenticationResult[1];
-        final Exception[] exception = new Exception[1];
-        Future<?> futureResult = acquireTokenSilent(resource, clientId, userId,
-                new AuthenticationCallback<AuthenticationResult>() {
-                    @Override
-                    public void onSuccess(AuthenticationResult result) {
-                        acquireTokenSilentSyncResult[0] = result;
-                    }
-
-                    @Override
-                    public void onError(Exception exc) {
-                        exception[0] = exc;
-                    }
-                });
-
+        Future<AuthenticationResult> futureResult = acquireTokenSilent(resource, clientId, userId,
+                null);
         try {
-            futureResult.get();
+            return futureResult.get();
         } catch (InterruptedException e) {
             convertExceptionForSync(e);
         } catch (ExecutionException e) {
             convertExceptionForSync(e);
-        }
-        if(exception[0] != null) {
-            convertExceptionForSync(exception[0]);
-        } else {
-            return acquireTokenSilentSyncResult[0];
         }
 
         return null;
@@ -622,13 +603,7 @@ public class AuthenticationContext {
             }
         }
 
-        if (e instanceof AuthenticationException) {
-            throw (AuthenticationException)e;
-        } else if (e instanceof IllegalArgumentException) {
-            throw (IllegalArgumentException)e;
-        } else {
-            throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getMessage(), e);
-        }
+        throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getMessage(), e);
     }
 
     /**
@@ -649,7 +624,7 @@ public class AuthenticationContext {
      *         Token,the Access Token's expiration time, Refresh token, and
      *         {@link UserInfo}.
      */
-    public Future<?> acquireTokenSilent(String resource, String clientId,
+    public Future<AuthenticationResult> acquireTokenSilent(String resource, String clientId,
             String userId, AuthenticationCallback<AuthenticationResult> callback) {
         if (StringExtensions.IsNullOrBlank(resource)) {
             throw new IllegalArgumentException("resource");
@@ -1057,7 +1032,7 @@ public class AuthenticationContext {
             callback = callbackExt;
         }
 
-        public void onError(final Exception e) {
+        public void onError(final AuthenticationException e) {
             if (mRefHandler != null && callback != null) {
                 mRefHandler.post(new Runnable() {
                     @Override
@@ -1066,6 +1041,8 @@ public class AuthenticationContext {
                         return;
                     }
                 });
+            } else {
+                throw e;
             }
         }
 
@@ -1082,7 +1059,7 @@ public class AuthenticationContext {
         }
     }
 
-    private Future<?> acquireTokenLocal(final IWindowComponent activity,
+    private Future<AuthenticationResult> acquireTokenLocal(final IWindowComponent activity,
             final boolean useDialog, final AuthenticationRequest request,
             final AuthenticationCallback<AuthenticationResult> externalCall) {
         getHandler();
@@ -1093,29 +1070,14 @@ public class AuthenticationContext {
         // related actions will be performed using Handler.
         Logger.setCorrelationId(getRequestCorrelationId());
         Logger.v(TAG, "Sending async task from thread:" + android.os.Process.myTid());
-        return sThreadExecutor.submit(new FutureTask<AuthenticationResult>(new Callable<AuthenticationResult>() {
+        return sThreadExecutor.submit(new Callable<AuthenticationResult>() {
+
             @Override
-            public AuthenticationResult call() throws Exception {
+            public AuthenticationResult call() {
                 Logger.v(TAG, "Running task in thread:" + android.os.Process.myTid());
                 return acquireTokenLocalCall(callbackHandle, activity, useDialog, request);
             }
-        }) {
-            @Override
-            protected void done() {
-                try {
-                    if (!isCancelled()) get();
-                } catch (ExecutionException e) {
-                    // Exception occurred, deal with it
-                    // callback should accept Throwable instead of Exception
-                    // but this change breaks current users
-                    callbackHandle.onError(new RuntimeException(e.getCause()));
-                } catch (InterruptedException e) {
-                    // Shouldn't happen, we're invoked when computation is finished
-                    throw new AssertionError(e);
-                }
-            }
         });
-
     }
 
     /**
