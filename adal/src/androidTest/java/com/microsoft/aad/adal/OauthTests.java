@@ -596,13 +596,16 @@ public class OauthTests extends InstrumentationTestCase {
         logResponse2.listenLogForMessageSegments(null, "Wrong format of the correlation ID:");
 
         // send call with mocks
+        Throwable throwable = null;
         try {
             m.invoke(oauth, mockResponse);
         } catch (InvocationTargetException e) {
+            throwable = e.getCause();
             // verify error
             assertTrue("Unexpected exception",
                     IllegalArgumentException.class.equals(e.getCause().getClass()));
         }
+        assertNotNull(throwable);
     }
 
     @SmallTest
