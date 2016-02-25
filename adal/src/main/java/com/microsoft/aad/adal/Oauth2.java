@@ -517,7 +517,7 @@ class Oauth2 {
 
                 Logger.v(TAG, "Server error message:" + errMessage);
                 if (response.getResponseException() != null) {
-                    throw new IOException(response.getResponseException());
+                    throw response.getResponseException();
                 }
             } else {
                 ClientMetrics.INSTANCE.setLastErrorCodes(result.getErrorCodes());
