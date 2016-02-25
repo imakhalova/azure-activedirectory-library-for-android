@@ -164,9 +164,12 @@ public class AuthenticationParameters {
                 HttpWebResponse webResponse = sWebRequest.sendGet(resourceUrl, headers);
 
                 if (webResponse != null) {
+                    if(webResponse.getResponseException() != null) {
+                        onCompleted(webResponse.getResponseException(), null);
+                    }
                     try {
                         onCompleted(null, parseResponse(webResponse));
-                    } catch (UnexpectedServerResponseException exc) {
+                    } catch (AuthenticationServerProtocolException exc) {
                         onCompleted(exc, null);
                     }
                 }
@@ -191,11 +194,11 @@ public class AuthenticationParameters {
      * @return {@link AuthenticationParameters}
      */
     public static AuthenticationParameters createFromResponseAuthenticateHeader(
-            String authenticateHeader) throws UnexpectedServerResponseException{
+            String authenticateHeader) throws AuthenticationServerProtocolException {
         AuthenticationParameters authParams = null;
 
         if (StringExtensions.IsNullOrBlank(authenticateHeader)) {
-            throw new UnexpectedServerResponseException(AUTH_HEADER_MISSING);
+            throw new AuthenticationServerProtocolException(AUTH_HEADER_MISSING);
         } else {
             Pattern p = Pattern.compile(REGEX);
             Matcher m = p.matcher(authenticateHeader);
@@ -239,7 +242,7 @@ public class AuthenticationParameters {
                         headerItems.put(key, value);
                     } else {
                         // invalid format
-                        throw new UnexpectedServerResponseException(AUTH_HEADER_INVALID_FORMAT);
+                        throw new AuthenticationServerProtocolException(AUTH_HEADER_INVALID_FORMAT);
                     }
                 }
 
@@ -250,17 +253,17 @@ public class AuthenticationParameters {
                             StringExtensions.removeQuoteInHeaderValue(headerItems.get(RESOURCE_KEY)));
                 } else {
                     // invalid format
-                    throw new UnexpectedServerResponseException(AUTH_HEADER_MISSING_AUTHORITY);
+                    throw new AuthenticationServerProtocolException(AUTH_HEADER_MISSING_AUTHORITY);
                 }
             } else {
-                throw new UnexpectedServerResponseException(AUTH_HEADER_INVALID_FORMAT);
+                throw new AuthenticationServerProtocolException(AUTH_HEADER_INVALID_FORMAT);
             }
         }
 
         return authParams;
     }
 
-    private static AuthenticationParameters parseResponse(HttpWebResponse webResponse) throws UnexpectedServerResponseException{
+    private static AuthenticationParameters parseResponse(HttpWebResponse webResponse) throws AuthenticationServerProtocolException {
         // Depending on the service side implementation for this resource
         if (webResponse.getStatusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
             Map<String, List<String>> responseHeaders = webResponse.getResponseHeaders();
@@ -273,8 +276,8 @@ public class AuthenticationParameters {
                 }
             }
 
-            throw new UnexpectedServerResponseException(AUTH_HEADER_MISSING);
+            throw new AuthenticationServerProtocolException(AUTH_HEADER_MISSING);
         }
-        throw new UnexpectedServerResponseException(AUTH_HEADER_WRONG_STATUS);
+        throw new AuthenticationServerProtocolException(AUTH_HEADER_WRONG_STATUS);
     }
 }

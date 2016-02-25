@@ -68,7 +68,7 @@ class HttpWebRequest {
 
     int mTimeOut = CONNECT_TIME_OUT;
 
-    private Throwable mException = null;
+    private Exception mException = null;
 
     HashMap<String, String> mRequestHeaders = null;
 
