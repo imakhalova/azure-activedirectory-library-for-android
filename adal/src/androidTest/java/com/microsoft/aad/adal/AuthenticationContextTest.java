@@ -2079,9 +2079,6 @@ public class AuthenticationContextTest extends AndroidTestCase {
         @Override
         public boolean isValidAuthority(URL authorizationEndpoint) {
             authorizationUrl = authorizationEndpoint;
-            if(!isValid) {
-                throw new AuthenticationException(ADALError.DISCOVERY_NOT_SUPPORTED);
-            }
             return isValid;
         }
 
