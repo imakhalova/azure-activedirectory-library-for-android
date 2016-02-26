@@ -537,7 +537,7 @@ public class AuthenticationContext {
     private String checkInputParameters(String resource, String clientId, String redirectUri,
             PromptBehavior behavior, AuthenticationCallback<AuthenticationResult> callback) {
         if (mContext == null) {
-            throw new AuthenticationException(ADALError.DEVELOPER_CONTEXT_IS_NOT_PROVIDED);
+            throw new IllegalArgumentException("context", new AuthenticationException(ADALError.DEVELOPER_CONTEXT_IS_NOT_PROVIDED));
         }
 
         if (StringExtensions.IsNullOrBlank(resource)) {
@@ -576,7 +576,7 @@ public class AuthenticationContext {
      *         {@link UserInfo}.
      */
     public AuthenticationResult acquireTokenSilentSync(String resource, String clientId,
-            String userId) {
+            String userId) throws AuthenticationException {
         final AuthenticationResult[] acquireTokenSilentSyncResult = new AuthenticationResult[1];
         final Exception[] exception = new Exception[1];
         Future<?> futureResult = acquireTokenSilent(resource, clientId, userId,
@@ -608,14 +608,14 @@ public class AuthenticationContext {
         return null;
     }
 
-    private void convertExceptionForSync(Exception e) {
+    private void convertExceptionForSync(Exception e) throws AuthenticationException {
         // change to unchecked exception
         if (e.getCause() != null) {
 
             if (e.getCause() instanceof AuthenticationException) {
                 throw (AuthenticationException)e.getCause();
-            } else if (e.getCause() instanceof IllegalArgumentException) {
-                throw (IllegalArgumentException)e.getCause();
+            } else if (e.getCause() instanceof RuntimeException) {
+                throw (RuntimeException)e.getCause();
             } else {
                 throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getCause()
                         .getMessage(), e.getCause());
@@ -804,7 +804,7 @@ public class AuthenticationContext {
                         // immediately to
                         // UI thread. All UI
                         // related actions will be performed using the Handler.
-                        sThreadExecutor.submit(new Runnable() {
+                        sThreadExecutor.execute(new Runnable() {
 
                             @Override
                             public void run() {
@@ -839,12 +839,12 @@ public class AuthenticationContext {
 
                                 try {
                                     if (result != null) {
-                                    	if (!StringExtensions.IsNullOrBlank(result.getErrorCode())) {
-                                    		Logger.e(TAG, result.getErrorLogInfo(), null, ADALError.AUTH_FAILED);
-                                    		callbackHandle.onError(new AuthenticationException(ADALError.AUTH_FAILED,
-                                    				result.getErrorLogInfo()));
-                                    		return;
-                                    	}
+                                        if (!StringExtensions.IsNullOrBlank(result.getErrorCode())) {
+                                            Logger.e(TAG, result.getErrorLogInfo(), null, ADALError.AUTH_FAILED);
+                                            callbackHandle.onError(new AuthenticationException(ADALError.AUTH_FAILED,
+                                                    result.getErrorLogInfo()));
+                                            return;
+                                        }
                                         Logger.v(TAG,
                                                 "OnActivityResult is setting the token to cache. "
                                                         + authenticationRequest.getLogInfo());
@@ -864,6 +864,10 @@ public class AuthenticationContext {
                                                 .onError(new AuthenticationException(
                                                         ADALError.AUTHORIZATION_CODE_NOT_EXCHANGED_FOR_TOKEN, correlationInfo));
                                     }
+                                } catch (AuthenticationException e) {
+                                    callbackHandle
+                                            .onError(new AuthenticationException(
+                                                    ADALError.AUTHORIZATION_CODE_NOT_EXCHANGED_FOR_TOKEN, correlationInfo, e));
                                 } finally {
                                     removeWaitingRequest(requestId);
                                 }
@@ -1192,8 +1196,6 @@ public class AuthenticationContext {
                     if (callbackHandle.callback != null) {
                         callbackHandle.onError(ex);
                         return null;
-                    } else {
-                        throw ex;
                     }
                 }
             } else {
@@ -1279,7 +1281,7 @@ public class AuthenticationContext {
                         ADALError.AUTH_FAILED_USER_MISMATCH));
                 return null;
             } else {
-                throw new AuthenticationException(ADALError.AUTH_FAILED_USER_MISMATCH);
+                throw new IllegalStateException(new AuthenticationException(ADALError.AUTH_FAILED_USER_MISMATCH));
             }
         }
 
@@ -1915,7 +1917,7 @@ public class AuthenticationContext {
         PackageManager pm = mContext.getPackageManager();
         if (PackageManager.PERMISSION_GRANTED != pm.checkPermission("android.permission.INTERNET",
                 mContext.getPackageName())) {
-            throw new AuthenticationException(ADALError.DEVELOPER_INTERNET_PERMISSION_MISSING);
+            throw new IllegalStateException(new AuthenticationException(ADALError.DEVELOPER_INTERNET_PERMISSION_MISSING));
         }
     }
 
