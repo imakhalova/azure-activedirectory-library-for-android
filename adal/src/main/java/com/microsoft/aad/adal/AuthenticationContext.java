@@ -577,7 +577,7 @@ public class AuthenticationContext {
      *         Token,the Access Token's expiration time, Refresh token, and
      *         {@link UserInfo}.
      */
-    public AuthenticationResult acquireTokenSilentSync(String resource, String clientId, String userId) throws Exception {
+    public AuthenticationResult acquireTokenSilentSync(String resource, String clientId, String userId) throws AuthenticationException, InterruptedException {
         final AtomicReference<AuthenticationResult> authenticationResult = new AtomicReference<>();
         final AtomicReference<Exception> exception = new AtomicReference<>();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -596,8 +596,25 @@ public class AuthenticationContext {
         });
 
         latch.await();
-        if (exception.get() != null) {
-            throw exception.get();
+        Exception e = exception.get();
+        if (e != null) {
+            // change to unchecked exception
+            if(e instanceof AuthenticationException) {
+                throw (AuthenticationException)e;
+            } else if(e instanceof RuntimeException) {
+                throw (RuntimeException)e;
+            }
+            if (e.getCause() != null) {
+                if (e.getCause() instanceof AuthenticationException) {
+                    throw (AuthenticationException) e.getCause();
+                } else if (e.getCause() instanceof RuntimeException) {
+                    throw (RuntimeException) e.getCause();
+                } else {
+                    throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getCause()
+                            .getMessage(), e.getCause());
+                }
+            }
+            throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getMessage(), e);
         }
 
         return authenticationResult.get();
