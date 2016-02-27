@@ -1942,7 +1942,7 @@ public class AuthenticationContext {
         }
 
         public boolean isConnectionAvailable() {
-            ConnectivityManager connectivityManager = (ConnectivityManager) mConnectionContext
+            ConnectivityManager connectivityManager = (ConnectivityManager)mConnectionContext
                     .getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
             boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
