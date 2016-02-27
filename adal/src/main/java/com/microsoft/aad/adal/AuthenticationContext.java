@@ -26,11 +26,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -575,35 +577,30 @@ public class AuthenticationContext {
      *         Token,the Access Token's expiration time, Refresh token, and
      *         {@link UserInfo}.
      */
-    public AuthenticationResult acquireTokenSilentSync(String resource, String clientId,
-            String userId) {
-        Future<AuthenticationResult> futureResult = acquireTokenSilent(resource, clientId, userId, null);
-        try {
-            return futureResult.get();
-        } catch (InterruptedException e) {
-            convertExceptionForSync(e);
-        } catch (ExecutionException e) {
-            convertExceptionForSync(e);
-        }
-
-        return null;
-    }
-
-    private void convertExceptionForSync(Exception e) {
-        // change to unchecked exception
-        if (e.getCause() != null) {
-
-            if (e.getCause() instanceof AuthenticationException) {
-                throw (AuthenticationException)e.getCause();
-            } else if (e.getCause() instanceof IllegalArgumentException) {
-                throw (IllegalArgumentException)e.getCause();
-            } else {
-                throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getCause()
-                        .getMessage(), e.getCause());
+    public AuthenticationResult acquireTokenSilentSync(String resource, String clientId, String userId) throws Exception {
+        final AtomicReference<AuthenticationResult> authenticationResult = new AtomicReference<>();
+        final AtomicReference<Exception> exception = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        acquireTokenSilentAsync(resource, clientId, userId, new AuthenticationCallback<AuthenticationResult>() {
+            @Override
+            public void onSuccess(AuthenticationResult result) {
+                authenticationResult.set(result);
+                latch.countDown();
             }
+
+            @Override
+            public void onError(Exception exc) {
+                exception.set(exc);
+                latch.countDown();
+            }
+        });
+
+        latch.await();
+        if (exception.get() != null) {
+            throw exception.get();
         }
 
-        throw new AuthenticationException(ADALError.ERROR_SILENT_REQUEST, e.getMessage(), e);
+        return authenticationResult.get();
     }
 
     /**
@@ -624,6 +621,8 @@ public class AuthenticationContext {
      *         Token,the Access Token's expiration time, Refresh token, and
      *         {@link UserInfo}.
      */
+    /* Use the {@link #acquireTokenSilentAsync} method. */
+    @Deprecated
     public Future<AuthenticationResult> acquireTokenSilent(String resource, String clientId,
             String userId, final AuthenticationCallback<AuthenticationResult> callback) {
         if (StringExtensions.IsNullOrBlank(resource)) {
@@ -657,6 +656,43 @@ public class AuthenticationContext {
             }
         });
         return futureTask;
+    }
+
+    /**
+     * The function will first look at the cache and automatically checks for
+     * the token expiration. Additionally, if no suitable access token is found
+     * in the cache, but refresh token is available, the function will use the
+     * refresh token automatically. This method will not show UI for the user.
+     * If prompt is needed, the method will return an exception
+     *
+     * @param resource required resource identifier.
+     * @param clientId required client identifier.
+     * @param userId UserId obtained from {@link UserInfo} inside
+     *            {@link AuthenticationResult}
+     * @param callback required {@link AuthenticationCallback} object for async
+     *            call.
+     * @return A {@link Future} object representing the
+     *         {@link AuthenticationResult} of the call. It contains Access
+     *         Token,the Access Token's expiration time, Refresh token, and
+     *         {@link UserInfo}.
+     */
+    public void acquireTokenSilentAsync(String resource,
+                                   String clientId,
+                                   String userId,
+                                   AuthenticationCallback<AuthenticationResult> callback) {
+        if (StringExtensions.IsNullOrBlank(resource)) {
+            throw new IllegalArgumentException("resource");
+        }
+        if (StringExtensions.IsNullOrBlank(clientId)) {
+            throw new IllegalArgumentException("clientId");
+        }
+
+        final AuthenticationRequest request = new AuthenticationRequest(mAuthority, resource,
+                clientId, userId, getRequestCorrelationId());
+        request.setSilent(true);
+        request.setPrompt(PromptBehavior.Auto);
+        request.setUserIdentifierType(UserIdentifierType.UniqueId);
+        acquireTokenLocal(null, false, request, callback);
     }
 
     /**
