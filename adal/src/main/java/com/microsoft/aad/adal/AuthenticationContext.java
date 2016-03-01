@@ -1094,7 +1094,7 @@ public class AuthenticationContext {
 
     private Handler mHandler;
 
-    class CallbackHandler {
+    private static class CallbackHandler {
         private Handler mRefHandler;
 
         private AuthenticationCallback<AuthenticationResult> callback;
@@ -1300,12 +1300,8 @@ public class AuthenticationContext {
                 } catch (AuthenticationException ex) {
                     // pass back to caller for known exceptions such as failure
                     // to encrypt
-                    if (callbackHandle.callback != null) {
-                        callbackHandle.onError(ex);
-                        return null;
-                    } else {
-                        throw ex;
-                    }
+                    callbackHandle.onError(ex);
+                    return null;
                 }
             } else {
                 Logger.v(TAG, "User is not specified for background token request");
@@ -1314,9 +1310,7 @@ public class AuthenticationContext {
             if (result != null && result.getAccessToken() != null
                     && !result.getAccessToken().isEmpty()) {
                 Logger.v(TAG, "Token is returned from background call ");
-                if (callbackHandle.callback != null) {
-                    callbackHandle.onSuccess(result);
-                }
+                callbackHandle.onSuccess(result);
                 return result;
             }
 
@@ -1326,7 +1320,7 @@ public class AuthenticationContext {
             // record calling uid for the account. This happens for Prompt auto
             // or always behavior.
             Logger.v(TAG, "Token is not returned from backgroud call");
-            if (!request.isSilent() && callbackHandle.callback != null && activity != null) {
+            if (!request.isSilent() && activity != null) {
 
                 // Only happens with callback since silent call does not show UI
                 Logger.v(TAG, "Launch activity for Authenticator");
@@ -1385,20 +1379,14 @@ public class AuthenticationContext {
         // Lookup access token from cache
         AuthenticationResult cachedItem = getItemFromCache(request);
         if (cachedItem != null && isUserMisMatch(request, cachedItem)) {
-            if (callbackHandle.callback != null) {
-                callbackHandle.onError(new AuthenticationException(
-                        ADALError.AUTH_FAILED_USER_MISMATCH));
-                return null;
-            } else {
-                throw new AuthenticationException(ADALError.AUTH_FAILED_USER_MISMATCH);
-            }
+            callbackHandle.onError(new AuthenticationException(
+                    ADALError.AUTH_FAILED_USER_MISMATCH));
+            return null;
         }
 
         if (!promptUser(request.getPrompt()) && isValidCache(cachedItem)) {
             Logger.v(TAG, "Token is returned from cache");
-            if (callbackHandle.callback != null) {
-                callbackHandle.onSuccess(cachedItem);
-            }
+            callbackHandle.onSuccess(cachedItem);
             return cachedItem;
         }
 
@@ -1410,7 +1398,7 @@ public class AuthenticationContext {
             return refreshToken(callbackHandle, activity, useDialog, request, refreshItem, true);
         } else {
             Logger.v(TAG, "Refresh token is not available");
-            if (!request.isSilent() && callbackHandle.callback != null
+            if (!request.isSilent()
                     && (activity != null || useDialog)) {
                 //Check if there is network connection
                 if (!mConnectionService.isConnectionAvailable()) {
