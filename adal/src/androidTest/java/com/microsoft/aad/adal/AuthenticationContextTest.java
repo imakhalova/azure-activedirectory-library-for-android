@@ -210,7 +210,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
             assertEquals("Permission related message",
                     ADALError.DEVELOPER_INTERNET_PERMISSION_MISSING,
-                    ((AuthenticationException)e).getCode());
+                    ((AuthenticationException)e.getCause()).getCode());
         }
     }
 
@@ -1009,7 +1009,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
     public void testRefreshTokenPositive() throws InterruptedException, IllegalArgumentException,
             NoSuchFieldException, IllegalAccessException, ClassNotFoundException,
             NoSuchMethodException, InstantiationException, InvocationTargetException,
-            NoSuchAlgorithmException, NoSuchPaddingException {
+            NoSuchAlgorithmException, NoSuchPaddingException, AuthenticationException {
 
         FileMockContext mockContext = new FileMockContext(getContext());
         ITokenCacheStore mockCache = getCacheForRefreshToken(TEST_TestIdToken_USERID, TEST_TestIdToken_UPN);
@@ -1056,7 +1056,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
             IllegalArgumentException, NoSuchFieldException, IllegalAccessException,
             ClassNotFoundException, NoSuchMethodException, InstantiationException,
             InvocationTargetException, NoSuchAlgorithmException, NoSuchPaddingException,
-            UnsupportedEncodingException {
+            UnsupportedEncodingException, AuthenticationException {
         scenario_UserId_LoginHint("test@user.com", "test@user.com", "test@user.com");
     }
 
@@ -1064,7 +1064,8 @@ public class AuthenticationContextTest extends AndroidTestCase {
             String acquireTokenHint) throws InterruptedException, IllegalArgumentException,
             NoSuchFieldException, IllegalAccessException, ClassNotFoundException,
             NoSuchMethodException, InstantiationException, InvocationTargetException,
-            NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException {
+            NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException,
+            AuthenticationException {
         FileMockContext mockContext = new FileMockContext(getContext());
         final AuthenticationContext context = new AuthenticationContext(mockContext,
                 VALID_AUTHORITY, false);
@@ -1115,7 +1116,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
             IllegalArgumentException, NoSuchFieldException, IllegalAccessException,
             ClassNotFoundException, NoSuchMethodException, InstantiationException,
             InvocationTargetException, NoSuchAlgorithmException, NoSuchPaddingException,
-            UnsupportedEncodingException {
+            UnsupportedEncodingException, AuthenticationException {
         scenario_UserId_LoginHint("test@user.com", "", "");
     }
 
@@ -1124,7 +1125,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
             IllegalArgumentException, NoSuchFieldException, IllegalAccessException,
             ClassNotFoundException, NoSuchMethodException, InstantiationException,
             InvocationTargetException, NoSuchAlgorithmException, NoSuchPaddingException,
-            UnsupportedEncodingException {
+            UnsupportedEncodingException, AuthenticationException {
         FileMockContext mockContext = new FileMockContext(getContext());
         final AuthenticationContext context = new AuthenticationContext(mockContext,
                 VALID_AUTHORITY, false);
@@ -1174,7 +1175,8 @@ public class AuthenticationContextTest extends AndroidTestCase {
     public void testScenario_Empty_TestIdToken() throws InterruptedException, IllegalArgumentException,
             NoSuchFieldException, IllegalAccessException, ClassNotFoundException,
             NoSuchMethodException, InstantiationException, InvocationTargetException,
-            NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException {
+            NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException,
+            AuthenticationException {
         FileMockContext mockContext = new FileMockContext(getContext());
         final AuthenticationContext context = new AuthenticationContext(mockContext,
                 VALID_AUTHORITY, false);
@@ -1258,7 +1260,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
     public void testAcquireTokenSilentSync_Positive() throws NoSuchAlgorithmException,
             NoSuchPaddingException, NoSuchFieldException, IllegalAccessException,
-            InterruptedException, ExecutionException {
+            InterruptedException, ExecutionException, AuthenticationException {
         FileMockContext mockContext = new FileMockContext(getContext());
         ITokenCacheStore mockCache = getCacheForRefreshToken(TEST_TestIdToken_USERID, TEST_TestIdToken_UPN);
         final AuthenticationContext context = getAuthenticationContext(mockContext,
@@ -1283,7 +1285,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
     public void testAcquireTokenSilentSync_Negative() throws NoSuchAlgorithmException,
             NoSuchPaddingException, NoSuchFieldException, IllegalAccessException,
-            InterruptedException, ExecutionException {
+            InterruptedException, ExecutionException, AuthenticationException {
         FileMockContext mockContext = new FileMockContext(getContext());
         ITokenCacheStore mockCache = getCacheForRefreshToken(TEST_TestIdToken_USERID, TEST_TestIdToken_UPN);
         final AuthenticationContext context = getAuthenticationContext(mockContext,
@@ -1298,6 +1300,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         // Call refresh token in silent API method
+
         try {
             context.acquireTokenSilentSync(null, "clientid", TEST_TestIdToken_USERID);
             Assert.fail("Expected argument exception");
@@ -1994,7 +1997,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         catch(InvocationTargetException e)
         {
             assertTrue(e.getCause() instanceof AuthenticationException);
-            assertEquals(ADALError.DEVELOPER_REDIRECTURI_INVALID,((AuthenticationException)e.getCause()).getCode());
+            assertEquals(ADALError.DEVELOPER_REDIRECTURI_INVALID, ((AuthenticationException) e.getCause()).getCode());
 //            assertTrue(((AuthenticationException)e.getCause()).getMessage().toString().contains("signature"));
         }
     }
