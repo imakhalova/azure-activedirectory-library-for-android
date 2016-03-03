@@ -397,7 +397,7 @@ public class AuthenticationActivity extends Activity {
                 } catch (IllegalArgumentException ex) {
                     correlationIdParsed = null;
                     Logger.e(TAG, "CorrelationId is malformed: " + correlationId, "",
-                            ADALError.CORRELATION_ID_FORMAT);
+                            ADALError.CORRELATION_ID_FORMAT, ex);
                 }
             }
             authRequest = new AuthenticationRequest(authority, resource, clientidKey, redirect,

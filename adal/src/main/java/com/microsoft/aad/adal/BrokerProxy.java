@@ -590,10 +590,10 @@ class BrokerProxy implements IBrokerProxy {
             }
         } catch (NameNotFoundException e) {
             Logger.e(TAG, "Broker related package does not exist", "",
-                    ADALError.BROKER_PACKAGE_NAME_NOT_FOUND);
+                    ADALError.BROKER_PACKAGE_NAME_NOT_FOUND, e);
         } catch (NoSuchAlgorithmException e) {
             Logger.e(TAG, "Digest SHA algorithm does not exists", "",
-                    ADALError.DEVICE_NO_SUCH_ALGORITHM);
+                    ADALError.DEVICE_NO_SUCH_ALGORITHM, e);
         }
         return false;
     }

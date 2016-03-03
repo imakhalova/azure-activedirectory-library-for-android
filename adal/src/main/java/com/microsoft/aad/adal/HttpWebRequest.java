@@ -147,7 +147,7 @@ class HttpWebRequest {
                 try {
                     responseStream = mConnection.getInputStream();
                 } catch (IOException ex) {
-                    Logger.e(TAG, "IOException:" + ex.getMessage(), "", ADALError.SERVER_ERROR);
+                    Logger.e(TAG, "IOException:" + ex.getMessage(), "", ADALError.SERVER_ERROR, ex);
                     // If it does not get the error stream, it will return
                     // exception in the httpresponse
                     responseStream = mConnection.getErrorStream();

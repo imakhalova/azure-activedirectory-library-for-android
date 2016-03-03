@@ -166,6 +166,7 @@ public class AuthenticationParameters {
                 if (webResponse != null) {
                     if(webResponse.getResponseException() != null) {
                         onCompleted(webResponse.getResponseException(), null);
+                        return;
                     }
                     try {
                         onCompleted(null, parseResponse(webResponse));
