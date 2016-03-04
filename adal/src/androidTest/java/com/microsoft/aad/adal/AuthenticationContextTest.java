@@ -1988,7 +1988,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         //test@case broker redirect uri with invalid signature
         try
         {
-        String testRedirectUri = "msauth://com.microsoft.aad.adal.testapp/falsesignH070%3D";
+        String testRedirectUri = "msauth://" + TEST_PACKAGE_NAME + "/falsesignH070%3D";
         Object authRequest = AuthenticationContextTest.createAuthenticationRequest(VALID_AUTHORITY, 
                 "resource", "clientid", testRedirectUri, "loginHint");
         m.invoke(authContext, authRequest);
@@ -1998,7 +1998,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         {
             assertTrue(e.getCause() instanceof AuthenticationException);
             assertEquals(ADALError.DEVELOPER_REDIRECTURI_INVALID, ((AuthenticationException) e.getCause()).getCode());
-//            assertTrue(((AuthenticationException)e.getCause()).getMessage().toString().contains("signature"));
+            assertTrue(((AuthenticationException)e.getCause()).getMessage().toString().contains("signature"));
         }
     }
 
