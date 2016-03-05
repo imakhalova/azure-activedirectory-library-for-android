@@ -47,6 +47,7 @@ import android.annotation.SuppressLint;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Base64;
+import android.util.Log;
 
 import com.microsoft.aad.adal.ADALError;
 import com.microsoft.aad.adal.AuthenticationConstants;
@@ -461,6 +462,7 @@ public class OauthTests extends InstrumentationTestCase {
             throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException,
             NoSuchAlgorithmException, MalformedURLException, AuthenticationException {
+
         IWebRequestHandler mockWebRequest = mock(IWebRequestHandler.class);
         KeyPair keyPair = getKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey)keyPair.getPublic();
