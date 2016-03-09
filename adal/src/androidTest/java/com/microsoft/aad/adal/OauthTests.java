@@ -463,9 +463,6 @@ public class OauthTests extends InstrumentationTestCase {
             InstantiationException, IllegalAccessException, InvocationTargetException,
             NoSuchAlgorithmException, MalformedURLException 
     {
-        getContext().getCacheDir();
-        System.setProperty("dexmaker.dexcache", getContext().getCacheDir().getPath());
-        
         IWebRequestHandler mockWebRequest = mock(IWebRequestHandler.class);
         KeyPair keyPair = getKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey)keyPair.getPublic();
