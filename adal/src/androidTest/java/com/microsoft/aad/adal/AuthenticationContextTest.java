@@ -1,4 +1,4 @@
-﻿// Copyright © Microsoft Open Technologies, Inc.
+// Copyright © Microsoft Open Technologies, Inc.
 //
 // All Rights Reserved
 //
@@ -1141,7 +1141,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         // Same call with correct upn will return from cache
         final CountDownLatch signalCallback2 = new CountDownLatch(1);
         callback.mSignal = signalCallback2;
-        context.acquireToken(testActivity, "resource", "clientid", "redirectUri", idtoken.upn, callback);
+        context.acquireToken(testActivity, "resource", "clientid", "redirectUri", TestIdToken.upn, callback);
         signalCallback2.await(CONTEXT_REQUEST_TIME_OUT, TimeUnit.MILLISECONDS);
         verifyTokenResult(TestIdToken, callback.mResult);
 
