@@ -814,7 +814,7 @@ public class AuthenticationActivity extends Activity {
                 // Record account in the AccountManager service
                 try {
                     setAccount(result);
-                } catch (GeneralSecurityException | UnsupportedEncodingException exc) {
+                } catch (GeneralSecurityException | IOException exc) {
                     Logger.e(TAG, "Error in setting the account" + mRequest.getLogInfo(), "",
                             ADALError.BROKER_ACCOUNT_SAVE_FAILED, exc);
                     result.taskException = exc;
@@ -837,7 +837,7 @@ public class AuthenticationActivity extends Activity {
         }
 
         private void appendAppUIDToAccount(StorageHelper cryptoHelper, Account account)
-            throws GeneralSecurityException, UnsupportedEncodingException {
+            throws GeneralSecurityException, IOException {
             String appIdList = mAccountManager.getUserData(account,
                     AuthenticationConstants.Broker.ACCOUNT_UID_CACHES);
             if (appIdList == null) {
@@ -868,7 +868,7 @@ public class AuthenticationActivity extends Activity {
         }
 
         private void setAccount(final TokenTaskResult result)
-                throws GeneralSecurityException, UnsupportedEncodingException {
+                throws GeneralSecurityException, IOException {
             // TODO Add token logging
             // TODO update for new cache logic
 

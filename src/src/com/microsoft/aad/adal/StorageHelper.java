@@ -136,7 +136,7 @@ public class StorageHelper {
      * @return
      * @throws NoSuchAlgorithmException
      */
-    final private void loadSecretKeyForAPI() throws NoSuchAlgorithmException {
+    final private void loadSecretKeyForAPI() throws IOException, GeneralSecurityException {
         // Loading key only once for performance. If API is upgraded, it will
         // restart the device anyway. It will load the correct key for new API. 
         if (mKey != null && mMacKey != null)
@@ -158,6 +158,7 @@ public class StorageHelper {
                 } catch (IOException | GeneralSecurityException e) {
                     Logger.e(TAG, "Failed to get private key from AndroidKeyStore", "",
                             ADALError.ANDROIDKEYSTORE_FAILED, e);
+                    throw e;
                 }
             }
 
@@ -307,7 +308,7 @@ public class StorageHelper {
      * @throws UnsupportedEncodingException
      */
     public String encrypt(String clearText)
-            throws GeneralSecurityException, UnsupportedEncodingException {
+            throws GeneralSecurityException, IOException {
 
         Logger.v(TAG, "Starting encryption");
 
