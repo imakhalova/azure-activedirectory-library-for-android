@@ -90,7 +90,11 @@ public class DefaultTokenCacheStore implements ITokenCacheStore, ITokenStoreQuer
                             + " is not found");
                 }
             }
-            mPrefs = mContext.getSharedPreferences(SHARED_PREFERENCE_NAME, Activity.MODE_PRIVATE);
+            String sharedPreferencesName = SHARED_PREFERENCE_NAME;
+            if (AuthenticationSettings.INSTANCE.getSharePreferencesVersion() != 0) {
+                sharedPreferencesName += AuthenticationSettings.INSTANCE.getSharePreferencesVersion();
+            }
+            mPrefs = mContext.getSharedPreferences(sharedPreferencesName, Activity.MODE_PRIVATE);
             if (mPrefs == null) {
                 throw new IllegalStateException(ADALError.DEVICE_SHARED_PREF_IS_NOT_AVAILABLE.getDescription());
             }
@@ -105,6 +109,41 @@ public class DefaultTokenCacheStore implements ITokenCacheStore, ITokenStoreQuer
                 sHelper = new StorageHelper(mContext);
                 Logger.v(TAG, "Finished to initialize storage helper");
             }
+        }
+
+        upgradeSharePreferencesToSwitchEncryption(AuthenticationSettings.INSTANCE.getSharePreferencesVersion());
+    }
+
+    private void upgradeSharePreferencesToSwitchEncryption(int newVersion) {
+        for (int i = 0; i < newVersion; i++ ) {
+            String sharedPreferencesName = SHARED_PREFERENCE_NAME;
+            if (i != 0) {
+                sharedPreferencesName += i;
+            }
+
+            SharedPreferences oldPreferences = mContext.getSharedPreferences(sharedPreferencesName, Activity.MODE_PRIVATE);
+            Map<String, String> oldTokens = (Map<String, String>)oldPreferences.getAll();
+            if (oldTokens.isEmpty()) {
+                // no old tokens, use new shared preferences as it is
+                break;
+            }
+            for (Entry<String, String> oldToken : oldTokens.entrySet()) {
+                String key = oldToken.getKey();
+                String json = oldPreferences.getString(key, "");
+
+                TokenCacheItem item = null;
+                try {
+                    String decrypted = getStorageHelper().decrypt(mContext, json);
+                    if (decrypted != null) {
+                        item = mGson.fromJson(decrypted, TokenCacheItem.class);
+                    }
+                } catch (GeneralSecurityException | IOException e) {
+                }
+                if (item != null) {
+                    setItem(key, item);
+                }
+            }
+            oldPreferences.edit().clear().apply();
         }
     }
 

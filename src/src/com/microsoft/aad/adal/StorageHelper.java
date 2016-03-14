@@ -169,6 +169,15 @@ public class StorageHelper {
     }
 
     /**
+     * Method that allows to simulate new application process which doesn't have key initialized
+     * Used only for unit tests
+     */
+    public void removeSecretKey() {
+        mKey = null;
+        mMacKey = null;
+        mBlobVersion = null;
+    }
+    /**
      * load key based on version for migration
      * 
      * @throws GeneralSecurityException

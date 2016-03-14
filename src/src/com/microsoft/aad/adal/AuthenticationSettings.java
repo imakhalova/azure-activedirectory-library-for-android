@@ -60,6 +60,16 @@ public enum AuthenticationSettings {
 
     private int mReadTimeOut = 30000;
 
+    public int getSharePreferencesVersion() {
+        return mSharePreferencesVersion;
+    }
+
+    public void setSharePreferencesVersion(int sharePreferencesVersion) {
+        this.mSharePreferencesVersion = sharePreferencesVersion;
+    }
+
+    private int mSharePreferencesVersion = 0;
+
     /**
      * Get bytes to derive secretKey to use in encrypt/decrypt.
      * 

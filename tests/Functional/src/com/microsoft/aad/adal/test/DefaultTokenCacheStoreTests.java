@@ -22,9 +22,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,6 +36,10 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import android.app.Activity;
 import android.content.Context;
@@ -249,8 +255,42 @@ public class DefaultTokenCacheStoreTests extends BaseTokenStoreTests {
         }
     }
 
+    public void testUpgrade() throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
+        DefaultTokenCacheStore store = (DefaultTokenCacheStore)setupItems();
+        // TODO: ITokenCacheStore.getAll() should return Collection
+        Iterator<TokenCacheItem> cacheItemIterator = store.getAll();
+        assertTrue("Has item", cacheItemIterator.hasNext());
+        int numItems = 0;
+        for ( ; cacheItemIterator.hasNext() ; ++numItems ) {
+            cacheItemIterator.next();
+        }
+
+        // change secretKey
+        AuthenticationSettings.INSTANCE.setSecretKey(generateSecretKey());
+        AuthenticationSettings.INSTANCE.setSharePreferencesVersion(1);
+        StorageHelper.getInstance().removeSecretKey();
+        DefaultTokenCacheStore store2 = (DefaultTokenCacheStore)getTokenCacheStore();
+        assertFalse("No items", store.getAll().hasNext());
+        assertTrue("Has item", store2.getAll().hasNext());
+        cacheItemIterator = store2.getAll();
+        int numNewItems = 0;
+        for ( ; cacheItemIterator.hasNext() ; ++numNewItems ) {
+            cacheItemIterator.next();
+        }
+        assertEquals("No lost items", numItems, numNewItems);
+    }
+
     @Override
     protected ITokenCacheStore getTokenCacheStore() {
         return new DefaultTokenCacheStore(this.getInstrumentation().getTargetContext());
+    }
+
+    private byte[] generateSecretKey() throws NoSuchAlgorithmException, UnsupportedEncodingException, InvalidKeySpecException {
+        SecretKeyFactory keyFactory = SecretKeyFactory
+                .getInstance("PBEWithSHA256And256BitAES-CBC-BC");
+        SecretKey tempkey = keyFactory.generateSecret(new PBEKeySpec("test".toCharArray(),
+                "abcdedfdfd".getBytes("UTF-8"), 100, 256));
+        SecretKey secretKey = new SecretKeySpec(tempkey.getEncoded(), "AES");
+        return secretKey.getEncoded();
     }
 }
