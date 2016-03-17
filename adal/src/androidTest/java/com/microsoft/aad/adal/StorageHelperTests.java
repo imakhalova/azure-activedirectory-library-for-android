@@ -243,7 +243,7 @@ public class StorageHelperTests extends AndroidTestCase {
         String encryptedInAPI17 = "cE1VTAwMb4ChefrTHHblCg0DYaK1UR456nW3q6+hqA9Cs2uB+bqcfsLzukiI+KOCdBGJV+JqhRJHBIDCOl68TYkLQAz65g=";
         Object storageHelper = getStorageHelper();
         Method decrypt = ReflectionUtils.getTestMethod(storageHelper, "decrypt", String.class);
-        String decrypted = (String)decrypt.invoke(storageHelper, encryptedInAPI17);
+            String decrypted = (String)decrypt.invoke(storageHelper, encryptedInAPI17);
         assertEquals("Expected clear text as same", expectedDecrypted, decrypted);
     }
 
@@ -325,7 +325,8 @@ public class StorageHelperTests extends AndroidTestCase {
             m.invoke(obj, input);
             Assert.fail("Supposed to throw");
         } catch (Exception e) {
-            assertTrue(expected.isInstance(e) || expected.isInstance(e.getCause()));
+            assertTrue("Expected exception = " + expected.toString() + " Received = " + e.getCause().getClass().toString(),
+                    expected.isInstance(e) || expected.isInstance(e.getCause()));
         }
     }
 }

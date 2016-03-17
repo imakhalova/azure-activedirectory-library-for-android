@@ -201,7 +201,7 @@ public class StorageHelper {
             }
         }
 
-        throw new IllegalArgumentException("keyVersion");
+        throw new IllegalArgumentException("keyVersion = " + keyVersion);
     }
 
     private SecretKey getSecretKey(byte[] rawBytes) {
@@ -275,6 +275,22 @@ public class StorageHelper {
         Mac mac = Mac.getInstance(MAC_ALGORITHM);
         mac.init(versionMacKey);
         mac.update(bytes, 0, macIndex);
+
+        // blob version
+        final byte[] blobVersion = new byte[KEY_VERSION_BLOB_LENGTH];
+        System.arraycopy(bytes, 0, blobVersion, 0, KEY_VERSION_BLOB_LENGTH);
+        mac.update(blobVersion);
+
+        // encrypted
+        final byte[] encrypted = new byte[encryptedLength];
+        System.arraycopy(bytes, KEY_VERSION_BLOB_LENGTH - 1, encrypted, 0, encryptedLength);
+        mac.update(encrypted);
+
+        // iv
+        final byte[] iv = new byte[DATA_KEY_LENGTH];
+        System.arraycopy(bytes, ivIndex, encrypted, 0, DATA_KEY_LENGTH);
+        mac.update(iv);
+
         byte[] macDigest = mac.doFinal();
 
         // Compare digest of input message and calculated digest
