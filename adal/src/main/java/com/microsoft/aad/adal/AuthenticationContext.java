@@ -257,14 +257,14 @@ public class AuthenticationContext {
      * @param clientId client identifier.
      * @return refresh token
      */
-    public String getFamilyRefreshTokenFromCache(String userId, String clientId) {
+    public String getFamilyRefreshTokenFromCache(final String userId, final String clientId) {
         if (mBrokerProxy.canSwitchToBroker()) {
             // don't return token from broker app
             return null;
         }
         final AuthenticationRequest request = new AuthenticationRequest(mAuthority, null,
                 clientId, userId, getRequestCorrelationId());
-        RefreshItem refreshItem = getRefreshToken(request);
+        final RefreshItem refreshItem = getRefreshToken(request);
         String refreshToken = null;
         if (refreshItem != null && refreshItem.mIsFamilyToken) {
             refreshToken = refreshItem.mRefreshToken;
