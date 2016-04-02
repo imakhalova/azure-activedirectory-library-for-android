@@ -250,6 +250,13 @@ public class AuthenticationContext {
         return mTokenCacheStore;
     }
 
+    /**
+     * Gets refresh token that can be used for multiple client Ids
+     * @param userId unique user Id obtained from
+     *            {@link AuthenticationResult #getUserInfo()}
+     * @param clientId client identifier.
+     * @return refresh token
+     */
     public String getFamilyRefreshTokenFromCache(String userId, String clientId) {
         if (mBrokerProxy.canSwitchToBroker()) {
             // don't return token from broker app
