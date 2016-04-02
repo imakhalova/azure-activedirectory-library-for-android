@@ -267,8 +267,50 @@ public class AuthenticationContext {
     }
 
     /**
+     * Validates refresh token for passed clientId and saves it in cache for passed userId
+     * @param refreshToken refresh token that needs to be validated
+     * @param userId unique user Id obtained from
+     *            {@link AuthenticationResult #getUserInfo()}
+     * @param clientId client identifier.
+     * @param callback {@link AuthenticationCallback} object for async call.
+     */
+    public void setFamilyRefreshTokenToCache(final String refreshToken,
+                                               final String userId,
+                                               final String clientId,
+                                               final AuthenticationCallback callback) {
+        if (callback == null) {
+            throw new IllegalArgumentException("callback");
+        }
+        final CallbackHandler callbackHandle = new CallbackHandler(getHandler(), callback);
+        acquireTokenByRefreshToken(refreshToken, clientId, new AuthenticationCallback<AuthenticationResult>() {
+            @Override
+            public void onSuccess(AuthenticationResult result) {
+                if (result == null || TextUtils.isEmpty(result.getAccessToken())) {
+                    callbackHandle.onError(new AuthenticationException(
+                            ADALError.AUTH_FAILED_NO_TOKEN,
+                            "Refresh token validation failed"));
+                } else {
+                    Logger.v(TAG, "Family refresh token is valid for client:" + clientId);
+                    final AuthenticationRequest request = new AuthenticationRequest(mAuthority, null,
+                            clientId, userId, getRequestCorrelationId());
+                    setItemToCache(request, result, false);
+                    callbackHandle.onSuccess(null);
+                }
+            }
+
+            @Override
+            public void onError(Exception exc) {
+                callbackHandle.onError(new AuthenticationException(
+                        ADALError.AUTH_REFRESH_FAILED,
+                        "Refresh token validation failed",
+                        exc));
+            }
+        });
+    }
+
+    /**
      * Gets authority that is used for this object of AuthenticationContext.
-     * 
+     *
      * @return Authority
      */
     public String getAuthority() {
