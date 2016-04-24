@@ -1430,13 +1430,14 @@ public class AuthenticationContext {
 
         // Trying to find refresh token first, if existed, will try to use the refresh token. 
         Logger.v(TAG, "Checking refresh tokens");
-        RefreshItem refreshItem = getRefreshToken(request);
+        final boolean useMultiResourceRefreshToken = cachedItem == null || cachedItem.getIsMultiResourceRefreshToken();
+        final RefreshItem refreshItem = getRefreshToken(request, useMultiResourceRefreshToken);
         AuthenticationResult authResult = null;
         if (!promptUser(request.getPrompt()) && refreshItem != null
                 && !StringExtensions.IsNullOrBlank(refreshItem.mRefreshToken)) {
             Logger.v(TAG, "Refresh token is available and it will attempt to refresh token");
             try {
-                authResult = getTokenWithRefreshToken(activity, useDialog, request, refreshItem, true);
+                authResult = getTokenWithRefreshTokenAndUpdateCache(request, refreshItem);
             } catch (AuthenticationException authenticationException) {
                 callbackHandle.onError(authenticationException);
                 return null;
@@ -1573,72 +1574,59 @@ public class AuthenticationContext {
      * another call to acquireToken. It may try multi resource refresh token for
      * second attempt.
      */
-    private class RefreshItem {
-        String mRefreshToken;
-
-        String mKey;
-
-        boolean mMultiResource;
-
-        UserInfo mUserInfo;
-
-        String mRawIdToken;
-
+    private static class RefreshItem {
+        final String mRefreshToken;
+        final String mKey;
+        final boolean mMultiResource;
+        final UserInfo mUserInfo;
+        final String mRawIdToken;
+        final String mTenantId;
         String mKeyWithUserId;
-
         String mKeyWithDisplayableId;
-        
-        String mTenantId;
 
-        public RefreshItem(String keyInCache, AuthenticationRequest request, TokenCacheItem item,
-                boolean multiResource) {
-            mKey = keyInCache;
-            mMultiResource = multiResource;
-
-            if (item != null) {
-                mRefreshToken = item.getRefreshToken();
-                mUserInfo = item.getUserInfo();
-                mRawIdToken = item.getRawIdToken();
-                mTenantId = item.getTenantId();
-                if (item.getUserInfo() != null) {
-                    mKeyWithUserId = CacheKey.createCacheKey(request, item.getUserInfo()
-                            .getUserId());
-                    mKeyWithDisplayableId = CacheKey.createCacheKey(request, item.getUserInfo()
-                            .getDisplayableId());
-                }
+        public RefreshItem(String keyInCache, AuthenticationRequest request, TokenCacheItem item) {
+            if (item == null) {
+                throw new IllegalArgumentException("item");
             }
-        }
-
-        public RefreshItem(String refreshToken) {
-            mMultiResource = false;
-            mRefreshToken = refreshToken;
+            mKey = keyInCache;
+            mMultiResource = item.getIsMultiResourceRefreshToken();
+            mRefreshToken = item.getRefreshToken();
+            mUserInfo = item.getUserInfo();
+            mRawIdToken = item.getRawIdToken();
+            mTenantId = item.getTenantId();
+            final UserInfo userInfo = item.getUserInfo();
+            if (userInfo != null) {
+                mKeyWithUserId = CacheKey.createCacheKey(request, userInfo.getUserId());
+                mKeyWithDisplayableId = CacheKey.createCacheKey(request, userInfo.getDisplayableId());
+            }
         }
     }
 
-    private RefreshItem getRefreshToken(final AuthenticationRequest request) {
+    private RefreshItem getRefreshToken(final AuthenticationRequest request, boolean useMultiResourceRefreshToken) {
         final String methodName = ":getRefreshToken";
         RefreshItem refreshItem = null;
         if (mTokenCacheStore != null) {
-            boolean multiResource = false;
-            // target refreshToken for this resource first. CacheKey will
-            // include the resourceId in the cachekey
-            Logger.v(TAG, "Looking for regular refresh token");
             String userId = request.getUserId();
             if (StringExtensions.IsNullOrBlank(userId)) {
                 // acquireTokenSilent expects userid field from UserInfo
                 userId = request.getLoginHint();
             }
-            String keyUsed = CacheKey.createCacheKey(request, userId);
-            TokenCacheItem item = mTokenCacheStore.getItem(keyUsed);
-            if (item == null || StringExtensions.IsNullOrBlank(item.getRefreshToken())) {
-                // if not present, check multiResource item in cache. Cache key
+            String keyUsed;
+            TokenCacheItem item;
+            if (!useMultiResourceRefreshToken) {
+                // target refreshToken for this resource only. CacheKey will
+                // include the resourceId in the cachekey
+                Logger.v(TAG, "Looking for regular refresh token");
+                keyUsed = CacheKey.createCacheKey(request, userId);
+                item = mTokenCacheStore.getItem(keyUsed);
+            } else {
+                // check multiResource item in cache. Cache key
                 // will not include resourceId in the cache key string.
                 Logger.v(TAG, "Looking for Multi Resource Refresh token");
                 keyUsed = CacheKey.createMultiResourceRefreshTokenKey(request, userId);
                 item = mTokenCacheStore.getItem(keyUsed);
-                multiResource = true;
             }
-            
+
             // Temporarily disable the family client id feature. 
             final boolean isFamilyClientIdFeatureEnabled = false;
             if (isFamilyClientIdFeatureEnabled) {
@@ -1659,7 +1647,7 @@ public class AuthenticationContext {
 
                 Logger.v(TAG, "Refresh token is available and id:" + refreshTokenHash
                         + " Key used:" + keyUsed);
-                refreshItem = new RefreshItem(keyUsed, request, item, multiResource);
+                refreshItem = new RefreshItem(keyUsed, request, item);
             }
         }
 
@@ -1810,23 +1798,62 @@ public class AuthenticationContext {
     }
 
     /**
-     * refresh token if possible. if it fails, it calls acquire token after
-     * removing refresh token from cache.
-     * 
-     * @param activity Activity to use in case refresh token does not succeed
-     *            and prompt is not set to never.
+     * refresh token if possible and update cache with new token value
+     *
      * @param request incoming request
      * @param refreshItem refresh item info to remove this refresh token from
      *            cache
-     * @param useCache refresh request can be explicit without cache usage.
-     *            Error message should return without trying prompt.
      * @return
      */
-    private AuthenticationResult getTokenWithRefreshToken(final IWindowComponent activity, final boolean useDialog,
-            final AuthenticationRequest request, final RefreshItem refreshItem, final boolean useCache) 
+    private AuthenticationResult getTokenWithRefreshTokenAndUpdateCache(
+            final AuthenticationRequest request, final RefreshItem refreshItem)
+            throws AuthenticationException {
+        final AuthenticationResult result = getTokenWithRefreshToken(request, refreshItem.mRefreshToken);
+
+        if (result == null || StringExtensions.IsNullOrBlank(result.getAccessToken())) {
+            String errLogInfo = result == null ? "" : result.getErrorLogInfo();
+            Logger.e(TAG, "Refresh token did not return accesstoken.", request.getLogInfo()
+                    + errLogInfo, ADALError.AUTH_FAILED_NO_TOKEN);
+
+            // Check error code, only remove token from cache if receiving invalid_grant from server
+            if (result != null &&
+                    AuthenticationConstants.OAuth2ErrorCode.INVALID_GRANT.equalsIgnoreCase(result.getErrorCode())) {
+                Logger.v(TAG, "Removing token cache for invalid_grant error returned from server.");
+                // remove item from cache to avoid same usage of
+                // refresh token in next acquireToken call
+                removeItemFromCache(refreshItem);
+            }
+
+        } else {
+            if (result.getUserInfo() == null && refreshItem.mUserInfo != null) {
+                Logger.v(TAG, "UserInfo is updated from cached result:" + request.getLogInfo());
+                result.setUserInfo(refreshItem.mUserInfo);
+                result.setIdToken(refreshItem.mRawIdToken);
+                result.setTenantId(refreshItem.mTenantId);
+            }
+
+            // it replaces multi resource refresh token as
+            // well with the new one since it is not stored
+            // with resource.
+            Logger.v(TAG, "Saving item into the cache." + request.getLogInfo());
+            setItemToCacheFromRefresh(refreshItem, request, result);
+        }
+
+        return result;
+    }
+
+    /**
+     * refresh token if possible.
+     * 
+     * @param request incoming request
+     * @param refreshToken refresh token
+     * @return
+     */
+    private AuthenticationResult getTokenWithRefreshToken(
+            final AuthenticationRequest request, final String refreshToken)
             throws AuthenticationException {
         Logger.v(TAG, "Process refreshToken for " + request.getLogInfo() + " refreshTokenId:"
-                + getTokenHash(refreshItem.mRefreshToken));
+                + getTokenHash(refreshToken));
 
         // Removes refresh token from cache, when this call is complete. Request
         // may be interrupted, if app is shutdown by user. Detect connection
@@ -1842,13 +1869,13 @@ public class AuthenticationContext {
             throw authenticationException;
         }
 
-        AuthenticationResult result = null;
+        final AuthenticationResult result;
         try {
             Oauth2 oauthRequest = new Oauth2(request, mWebRequest, mJWSBuilder);
-            result = oauthRequest.refreshToken(refreshItem.mRefreshToken);
+            result = oauthRequest.refreshToken(refreshToken);
             if (result != null && StringExtensions.IsNullOrBlank(result.getRefreshToken())) {
                 Logger.v(TAG, "Refresh token is not returned or empty");
-                result.setRefreshToken(refreshItem.mRefreshToken);
+                result.setRefreshToken(refreshToken);
             }
         } catch (IOException | AuthenticationException exc) {
             // Server side error or similar
@@ -1862,49 +1889,7 @@ public class AuthenticationContext {
             throw authException;
         }
 
-        // useCache will be false when calling from acquireTokenUsingRefreshToken, and if false, need to return
-        // the error through callback. If true, just return the result back to localflow. 
-        if (useCache) {
-            if (result == null || StringExtensions.IsNullOrBlank(result.getAccessToken())) {
-                String errLogInfo = result == null ? "" : result.getErrorLogInfo();
-                Logger.e(TAG, "Refresh token did not return accesstoken.", request.getLogInfo()
-                        + errLogInfo, ADALError.AUTH_FAILED_NO_TOKEN);
-
-                // Check error code, only remove token from cache if receiving invalid_grant from server
-                if (AuthenticationConstants.OAuth2ErrorCode.INVALID_GRANT.equals(result.getErrorCode())) {
-                    Logger.v(TAG, "Removing token cache for invalid_grant error returned from server.");
-                    removeItemFromCache(refreshItem);
-                }
-
-                return result;
-            } else {
-                Logger.v(TAG, "It finished refresh token request:" + request.getLogInfo());
-                if (result.getUserInfo() == null && refreshItem.mUserInfo != null) {
-                    Logger.v(TAG, "UserInfo is updated from cached result:" + request.getLogInfo());
-                    result.setUserInfo(refreshItem.mUserInfo);
-                    result.setIdToken(refreshItem.mRawIdToken);
-                    result.setTenantId(refreshItem.mTenantId);
-                }
-
-                // it replaces multi resource refresh token as
-                // well with the new one since it is not stored
-                // with resource.
-                Logger.v(TAG, "Cache is used. It will set item to cache" + request.getLogInfo());
-                setItemToCacheFromRefresh(refreshItem, request, result);
-
-                // return result obj which has error code and
-                // error description that is returned from
-                // server response
-                return result;
-            }
-        } else {
-            // User is not using cache and explicitly
-            // calling with refresh token. User should received
-            // error code and error description in
-            // Authentication result for Oauth errors
-            Logger.v(TAG, "Cache is not used for Request:" + request.getLogInfo());
-            return result;
-        }
+        return result;
     }
 
     private boolean validateAuthority(final URL authorityUrl) {
@@ -2061,8 +2046,6 @@ public class AuthenticationContext {
                 // It is not using cache and refresh is not expected to
                 // show authentication activity.
                 request.setSilent(true);
-                final RefreshItem refreshItem = new RefreshItem(refreshToken);
-
                 if (mValidateAuthority) {
                     Logger.v(TAG, "Validating authority");
 
@@ -2084,7 +2067,7 @@ public class AuthenticationContext {
                 final AuthenticationResult authResult;
                 try
                 {
-                    authResult = getTokenWithRefreshToken(null, false, request, refreshItem, false);
+                    authResult = getTokenWithRefreshToken(request, refreshToken);
                 }
                 catch (final AuthenticationException authException)
                 {
@@ -2221,7 +2204,7 @@ public class AuthenticationContext {
         // Package manager does not report for ADAL
         // AndroidManifest files are not merged, so it is returning hard coded
         // value
-        return "1.1.16";
+        return "1.1.17";
     }
 
     /**

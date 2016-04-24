@@ -28,6 +28,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -67,8 +68,9 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Base64;
 
+import junit.framework.Assert;
 
-// TODO: Unit Test?
+import org.json.JSONException;
 
 @SuppressLint("TrulyRandom")
 public class OauthTests extends InstrumentationTestCase {
@@ -101,7 +103,7 @@ public class OauthTests extends InstrumentationTestCase {
         assertEquals("idpProvider", ReflectionUtils.getFieldValue(actual, "mIdentityProvider"));
         assertEquals("53c6acf2-2742-4538-918d-e78257ec8516",
                 ReflectionUtils.getFieldValue(actual, "mObjectId"));
-        assertTrue(1387227772 == (Long)ReflectionUtils.getFieldValue(actual, "mPasswordExpiration"));
+        assertTrue(1387227772 == (Long) ReflectionUtils.getFieldValue(actual, "mPasswordExpiration"));
         assertEquals("pwdUrl", ReflectionUtils.getFieldValue(actual, "mPasswordChangeUrl"));
     }
 
@@ -446,8 +448,7 @@ public class OauthTests extends InstrumentationTestCase {
             IllegalAccessException, InvocationTargetException {
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String json = "{\"access_token\":\"sometokenhere\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refreshfasdfsdf435\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
 
         // send request
         MockAuthenticationCallback testResult = refreshToken(getValidAuthenticationRequest(),
@@ -466,7 +467,7 @@ public class OauthTests extends InstrumentationTestCase {
     public void testRefreshTokenWebResponse_DeviceChallenge_Positive()
             throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException,
-            NoSuchAlgorithmException, MalformedURLException, AuthenticationException {
+            NoSuchAlgorithmException, IOException, AuthenticationException {
         IWebRequestHandler mockWebRequest = mock(IWebRequestHandler.class);
         KeyPair keyPair = getKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey)keyPair.getPublic();
@@ -492,8 +493,7 @@ public class OauthTests extends InstrumentationTestCase {
         HashMap<String, List<String>> headers = getHeader(
                 AuthenticationConstants.Broker.CHALLENGE_REQUEST_HEADER, challengeHeaderValue);
         HttpWebResponse responeChallenge = new HttpWebResponse(401, null, headers);
-        HttpWebResponse responseValid = new HttpWebResponse(200,
-                tokenPositiveResponse.getBytes(Charset.defaultCharset()), null);
+        HttpWebResponse responseValid = new HttpWebResponse(200, tokenPositiveResponse, null);
         // first call returns 401 and second call returns token
         when(
                 mockWebRequest.sendPost(eq(new URL(TEST_AUTHORITY + "/oauth2/token")),
@@ -518,7 +518,7 @@ public class OauthTests extends InstrumentationTestCase {
     public void testRefreshTokenWebResponse_DeviceChallenge_Header_Empty()
             throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException,
-            NoSuchAlgorithmException, MalformedURLException {
+            NoSuchAlgorithmException, IOException {
         IWebRequestHandler mockWebRequest = mock(IWebRequestHandler.class);
         HashMap<String, List<String>> headers = getHeader(
                 AuthenticationConstants.Broker.CHALLENGE_REQUEST_HEADER, " ");
@@ -553,8 +553,7 @@ public class OauthTests extends InstrumentationTestCase {
         String json = "{\"id_token\":\""
                 + testIdToken
                 + "\",\"access_token\":\"sometokenhere2343=\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refreshfasdfsdf435=\",\"scope\":\"*\"}";
-        HttpWebResponse mockResponse = new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null);
+        HttpWebResponse mockResponse = new HttpWebResponse(200, json, null);
 
         // send call with mocks
         AuthenticationResult result = (AuthenticationResult)m.invoke(oauth, mockResponse);
@@ -580,8 +579,7 @@ public class OauthTests extends InstrumentationTestCase {
         listOfHeaders.add(UUID.randomUUID().toString());
         HashMap<String, List<String>> headers = new HashMap<String, List<String>>();
         headers.put(AuthenticationConstants.AAD.CLIENT_REQUEST_ID, listOfHeaders);
-        HttpWebResponse mockResponse = new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), headers);
+        HttpWebResponse mockResponse = new HttpWebResponse(200, json, headers);
         TestLogResponse logResponse = new TestLogResponse();
         logResponse.listenForLogMessage("CorrelationId is not matching", null);
 
@@ -597,7 +595,7 @@ public class OauthTests extends InstrumentationTestCase {
         List<String> invalidHeaders = new ArrayList<String>();
         invalidHeaders.add("invalid-UUID");
         headers.put(AuthenticationConstants.AAD.CLIENT_REQUEST_ID, invalidHeaders);
-        mockResponse = new HttpWebResponse(200, json.getBytes(Charset.defaultCharset()), headers);
+        mockResponse = new HttpWebResponse(200, json, headers);
         TestLogResponse logResponse2 = new TestLogResponse();
         logResponse2.listenLogForMessageSegments("Wrong format of the correlation ID:");
 
@@ -619,8 +617,7 @@ public class OauthTests extends InstrumentationTestCase {
         Method m = ReflectionUtils.getTestMethod(oauth, "processTokenResponse",
                 Class.forName("com.microsoft.aad.adal.HttpWebResponse"));
         String json = "{invalid";
-        HttpWebResponse mockResponse = new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null);
+        HttpWebResponse mockResponse = new HttpWebResponse(200, json, null);
 
         // send call with mocks
         AuthenticationResult result = (AuthenticationResult)m.invoke(oauth, mockResponse);
@@ -628,6 +625,7 @@ public class OauthTests extends InstrumentationTestCase {
         // verify same token
         assertEquals("Same token in parsed result", "It failed to parse response as json",
                 result.getErrorCode());
+
     }
 
     @SmallTest

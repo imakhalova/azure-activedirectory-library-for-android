@@ -743,8 +743,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
                 + id
                 + "\",\"token_type\":\"Bearer\",\"expires_in\":\"29344\",\"expires_on\":\"1368768616\",\"refresh_token\":\""
                 + refreshToken + "\",\"scope\":\"*\",\"id_token\":\"" + TEST_IDTOKEN + "\"}";
-        mockWebRequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        mockWebRequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", mockWebRequest);
         return mockWebRequest;
     }
@@ -1013,8 +1012,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         String json = "{\"id_token\":\""
                 + TEST_IDTOKEN
                 + "\",\"access_token\":\"TokenFortestRefreshTokenPositive\",\"token_type\":\"Bearer\",\"expires_in\":\"-10\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         // Call acquire token which will try refresh token based on cache
@@ -1029,8 +1027,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         json = "{\"id_token\":\""
                 + TEST_IDTOKEN
                 + "\",\"access_token\":\"TokenReturnsWithTestIdToken\",\"token_type\":\"Bearer\",\"expires_in\":\"10\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refreshABC\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         AuthenticationResult result = context.acquireTokenSilentSync("resource", "clientid",
                 TEST_IDTOKEN_USERID);
@@ -1071,8 +1068,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         String json = "{\"id_token\":\""
                 + TestIdToken.getTestIdToken()
                 + "\",\"access_token\":\"TokenUserIdTest\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         Intent intent = getResponseIntent(callback, "resource", "clientid", "redirectUri",
                 responseIntentHint);
@@ -1132,8 +1128,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         String json = "{\"id_token\":\""
                 + TestIdToken.getTestIdToken()
                 + "\",\"access_token\":\"TokenUserIdTest\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         Intent intent = getResponseIntent(callback, "resource", "clientid", "redirectUri",
                 loginHint);
@@ -1177,8 +1172,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         MockAuthenticationCallback callback = new MockAuthenticationCallback(signalCallback);
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String json = "{\"access_token\":\"TokenUserIdTest\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         Intent intent = getResponseIntent(callback, "resource", "clientid", "redirectUri", null);
 
@@ -1228,8 +1222,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         String json = "{\"id_token\":\""
                 + TEST_IDTOKEN
                 + "\",\"access_token\":\"TokenFortestRefreshTokenPositive\",\"token_type\":\"Bearer\",\"expires_in\":\"-10\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\",\"foci\":\"familyClientId\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         // Call acquire token which will try refresh token based on cache
@@ -1246,8 +1239,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         json = "{\"id_token\":\""
                 + TEST_IDTOKEN
                 + "\",\"access_token\":\"I am a new access token\",\"token_type\":\"Bearer\",\"expires_in\":\"10\",\"expires_on\":\"1368768616\",\"refresh_token\":\"I am a new refresh token\",\"scope\":\"*\",\"foci\":\"familyClientId\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         AuthenticationResult result = context.acquireTokenSilentSync("resource", "clientid",
                 TEST_IDTOKEN_USERID);
@@ -1291,8 +1283,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         final String json = "{\"id_token\":\""
                 + TEST_IDTOKEN
                 + "\",\"access_token\":\"I am a new access token\",\"token_type\":\"Bearer\",\"expires_in\":\"10\",\"expires_on\":\"1368768616\",\"refresh_token\":\"I am a new refresh token\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         
         final String anotherClientId = "clientId2";
@@ -1334,7 +1325,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         
         // Do silent token request and return idtoken in the result
         String responseBody = "{\"error\":\"invalid_grant\",\"error_description\":\"AADSTS70000: Authentication failed. Refresh Token is not valid.\r\nTrace ID: bb27293d-74e4-4390-882b-037a63429026\r\nCorrelation ID: b73106d5-419b-4163-8bc6-d2c18f1b1a13\r\nTimestamp: 2014-11-06 18:39:47Z\",\"error_codes\":[70000],\"timestamp\":\"2014-11-06 18:39:47Z\",\"trace_id\":\"bb27293d-74e4-4390-882b-037a63429026\",\"correlation_id\":\"b73106d5-419b-4163-8bc6-d2c18f1b1a13\",\"submit_url\":null,\"context\":null}";
-        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
         
         final String anotherClientId = "clientId2";
@@ -1420,8 +1411,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         testActivity.mSignal = signal;
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String json = "{\"access_token\":\"TokenFortestRefreshTokenPositive\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
-        webrequest.setReturnResponse(new HttpWebResponse(200, json.getBytes(Charset
-                .defaultCharset()), null));
+        webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         // Call refresh token in silent API method
@@ -1445,7 +1435,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
         testActivity.mSignal = signal;
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String responseBody = "{\"error\":\"invalid_grant\",\"error_description\":\"AADSTS70000: Authentication failed. Refresh Token is not valid.\r\nTrace ID: bb27293d-74e4-4390-882b-037a63429026\r\nCorrelation ID: b73106d5-419b-4163-8bc6-d2c18f1b1a13\r\nTimestamp: 2014-11-06 18:39:47Z\",\"error_codes\":[70000],\"timestamp\":\"2014-11-06 18:39:47Z\",\"trace_id\":\"bb27293d-74e4-4390-882b-037a63429026\",\"correlation_id\":\"b73106d5-419b-4163-8bc6-d2c18f1b1a13\",\"submit_url\":null,\"context\":null}";
-        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         // Call refresh token in silent API method
@@ -2163,7 +2153,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String responseBody = getErrorResponseBody("invalid_grant");
-        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);        
 
         try {     
@@ -2192,7 +2182,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
         String responseBody = getErrorResponseBody(null);
-        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+        webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
         ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
         try {
@@ -2223,7 +2213,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
 
          MockWebRequestHandler webrequest = new MockWebRequestHandler();
          String responseBody = getErrorResponseBody("interaction_required");
-         webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+         webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
          ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
          try {
@@ -2257,7 +2247,7 @@ public class AuthenticationContextTest extends AndroidTestCase {
          MockAuthenticationCallback callback = new MockAuthenticationCallback(signalCallback);
          MockWebRequestHandler webrequest = new MockWebRequestHandler();
          String responseBody = getErrorResponseBody("interaction_required");
-         webrequest.setReturnResponse(new HttpWebResponse(400, responseBody.getBytes(), null));
+         webrequest.setReturnResponse(new HttpWebResponse(400, responseBody, null));
          ReflectionUtils.setFieldValue(context, "mWebRequest", webrequest);
 
          context.acquireToken(testActivity, "resource", "clientId", "redirect", TEST_IDTOKEN_UPN,
