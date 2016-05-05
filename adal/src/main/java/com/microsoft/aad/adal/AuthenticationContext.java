@@ -1439,12 +1439,18 @@ public class AuthenticationContext {
             try {
                 authResult = getTokenWithRefreshTokenAndUpdateCache(request, refreshItem);
             } catch (AuthenticationException authenticationException) {
+                ClientAnalytics.logEvent(
+                        InstrumentationIDs.REFRESH_TOKEN_REQUEST_FAILED,
+                        new InstrumentationPropertiesBuilder(request, authenticationException).build());
                 callbackHandle.onError(authenticationException);
                 return null;
             }
             
             if (authResult != null && !StringExtensions.IsNullOrBlank(authResult.getAccessToken())) {
                 callbackHandle.onSuccess(authResult);
+                ClientAnalytics.logEvent(
+                        InstrumentationIDs.REFRESH_TOKEN_REQUEST_SUCCEEDED,
+                        new InstrumentationPropertiesBuilder(request, authResult).build());
                 return authResult;
             }
         } 
@@ -1455,9 +1461,15 @@ public class AuthenticationContext {
         if (refreshItem == null || authResult == null 
                 || (authResult != null && StringExtensions.IsNullOrBlank(authResult.getAccessToken()))) {
             Logger.v(TAG, "Refresh token is not available or refresh token request failed to return token.");
+            ClientAnalytics.logEvent(
+                    InstrumentationIDs.AUTH_TOKEN_NOT_RETURNED,
+                    new InstrumentationPropertiesBuilder(request, authResult).build());
             if (!request.isSilent() && (activity != null || useDialog)) {
                 acquireTokenInteractively(callbackHandle, activity, request, useDialog);
             } else {
+                // TODO: investigate which server response actually should force user to sign in again
+                // and which error actually should just notify user that some resource require extra steps
+
                 final String errorInfo = authResult == null ? "" : authResult.getErrorLogInfo();
                 // User does not want to launch activity
                 Logger.e(TAG, "Prompt is not allowed and failed to get token:", request.getLogInfo() + " " + errorInfo,
@@ -2204,7 +2216,7 @@ public class AuthenticationContext {
         // Package manager does not report for ADAL
         // AndroidManifest files are not merged, so it is returning hard coded
         // value
-        return "1.1.17";
+        return "1.1.18";
     }
 
     /**

@@ -24,37 +24,21 @@
 package com.microsoft.aad.adal;
 
 /**
- * usage authentication error.
+ * Index of instrumentation event IDs used for logging
  */
-public class UsageAuthenticationException extends AuthenticationException {
-    static final long serialVersionUID = 1;
+final class InstrumentationIDs {
+    /* Event invoked when refresh token request fails with some exception */
+    static final String REFRESH_TOKEN_REQUEST_FAILED = "RefreshTokenRequestFailed";
+    /* Event invoked when auth token wasn't obtained by some reason */
+    static final String AUTH_TOKEN_NOT_RETURNED = "AuthTokenNotReturned";
+    /* Event invoked when auth token was successfully obtained */
+    static final String REFRESH_TOKEN_REQUEST_SUCCEEDED = "RefreshTokenRequestSucceeded";
 
-    /**
-     * Constructs a new AuthenticationCancelError.
-     */
-    public UsageAuthenticationException() {
-        super();
-    }
-
-    /**
-     * Constructs a new AuthenticationCancelError with message.
-     * 
-     * @param msg Message for cancel request
-     */
-    public UsageAuthenticationException(ADALError code, String msg) {
-        super(code, msg);
-    }
-    
-    /**
-     * Constructs a new AuthenticationCancelError with message and the cause exception
-     * 
-     * @param code Resource file related error code. Message will be derived
-     *            from resource with using app context
-     * @param details Details related to the error such as query string, request
-     *            info
-     * @param throwable {@link Throwable}
-     */
-    public UsageAuthenticationException(ADALError code, String msg, Throwable throwable) {
-        super(code, msg, throwable);
-    }
+    static final String ERROR_CLASS = "ErrorClass";
+    static final String ERROR_CODE = "ErrorCode";
+    static final String ERROR_MESSAGE = "ErrorMessage";
+    static final String USER_ID = "UserId";
+    static final String RESOURCE_ID = "ResourceName";
+    static final String CORRELATION_ID = "CorrelationId";
+    static final String AUTHORITY_ID = "Authority";
 }
