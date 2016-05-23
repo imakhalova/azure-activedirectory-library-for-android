@@ -36,7 +36,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -45,15 +44,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import com.microsoft.aad.adal.ADALError;
-import com.microsoft.aad.adal.ApplicationReceiver;
-import com.microsoft.aad.adal.AuthenticationActivity;
-import com.microsoft.aad.adal.AuthenticationConstants;
-import com.microsoft.aad.adal.AuthenticationException;
-import com.microsoft.aad.adal.AuthenticationSettings;
-import com.microsoft.aad.adal.HttpWebResponse;
-import com.microsoft.aad.adal.R;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -144,7 +134,7 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
         assertNotNull(webview);
 
         // Javascript enabled
-        assertTrue(webview.getSettings().getJavaScriptEnabled());
+        assertTrue(webview.getSettings().getJavaScriptEnabled());       
     }
 
     @SmallTest
@@ -169,7 +159,7 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
         assertEquals(TEST_REQUEST_ID,
                 data.getIntExtra(AuthenticationConstants.Browser.REQUEST_ID, 0));
     }
-
+    
     @SmallTest
     @UiThreadTest
     public void testWebview_InstallLink() throws IllegalArgumentException,
@@ -206,7 +196,7 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
     /**
      * Return authentication exception at setResult so that activity receives at
      * onActivityResult
-     *
+     * 
      * @throws IllegalArgumentException
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
@@ -275,8 +265,25 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
         WebViewClient client = getCustomWebViewClient();
         WebView mockview = new WebView(getActivity().getApplicationContext());
         ReflectionUtils.setFieldValue(activity, "mSpinner", null);
-        //shouldOverrideUrlLoading should prevent non https redirects in the web view
         assertEquals(false,client.shouldOverrideUrlLoading(mockview, url));
+    }
+    
+    @SmallTest
+    @UiThreadTest    
+    public void testWebview_blankredirectURL() throws IllegalArgumentException,
+            NoSuchFieldException, IllegalAccessException, InvocationTargetException,
+            ClassNotFoundException, NoSuchMethodException, InstantiationException,
+            InterruptedException, ExecutionException {
+        startActivity(intentToStartActivity, null, null);
+        activity = getActivity();
+        /*
+         * case 1: url = "about:blank"
+         */
+        String url = "about:blank";
+        WebViewClient client = getCustomWebViewClient();
+        WebView mockview = new WebView(getActivity().getApplicationContext());
+        ReflectionUtils.setFieldValue(activity, "mSpinner", null);
+        assertEquals(true,client.shouldOverrideUrlLoading(mockview, url));
     }
     
 
@@ -291,9 +298,9 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
     }
 
     /**
-     * mocks webresponse and passes json with TestIdToken to verify that broker
-     * response returns TestIdToken info
-     *
+     * mocks webresponse and passes json with idtoken to verify that broker
+     * response returns idtoken info
+     * 
      * @throws IllegalArgumentException
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
@@ -455,9 +462,9 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
     private MockWebRequestHandler setMockWebResponse() throws NoSuchFieldException,
             IllegalAccessException {
         MockWebRequestHandler webrequest = new MockWebRequestHandler();
-        String TestIdToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiJlNzBiMTE1ZS1hYzBhLTQ4MjMtODVkYS04ZjRiN2I0ZjAwZTYiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwibmJmIjoxMzc2NDI4MzEwLCJleHAiOjEzNzY0NTcxMTAsInZlciI6IjEuMCIsInRpZCI6IjMwYmFhNjY2LThkZjgtNDhlNy05N2U2LTc3Y2ZkMDk5NTk2MyIsIm9pZCI6IjRmODU5OTg5LWEyZmYtNDExZS05MDQ4LWMzMjIyNDdhYzYyYyIsInVwbiI6ImFkbWluQGFhbHRlc3RzLm9ubWljcm9zb2Z0LmNvbSIsInVuaXF1ZV9uYW1lIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29tIiwic3ViIjoiVDU0V2hGR1RnbEJMN1VWYWtlODc5UkdhZEVOaUh5LXNjenNYTmFxRF9jNCIsImZhbWlseV9uYW1lIjoiU2VwZWhyaSIsImdpdmVuX25hbWUiOiJBZnNoaW4ifQ.";
+        String idToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiJlNzBiMTE1ZS1hYzBhLTQ4MjMtODVkYS04ZjRiN2I0ZjAwZTYiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwibmJmIjoxMzc2NDI4MzEwLCJleHAiOjEzNzY0NTcxMTAsInZlciI6IjEuMCIsInRpZCI6IjMwYmFhNjY2LThkZjgtNDhlNy05N2U2LTc3Y2ZkMDk5NTk2MyIsIm9pZCI6IjRmODU5OTg5LWEyZmYtNDExZS05MDQ4LWMzMjIyNDdhYzYyYyIsInVwbiI6ImFkbWluQGFhbHRlc3RzLm9ubWljcm9zb2Z0LmNvbSIsInVuaXF1ZV9uYW1lIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29tIiwic3ViIjoiVDU0V2hGR1RnbEJMN1VWYWtlODc5UkdhZEVOaUh5LXNjenNYTmFxRF9jNCIsImZhbWlseV9uYW1lIjoiU2VwZWhyaSIsImdpdmVuX25hbWUiOiJBZnNoaW4ifQ.";
         String json = "{\"id_token\":"
-                + TestIdToken
+                + idToken
                 + ",\"access_token\":\"TokentestBroker\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refresh112\",\"scope\":\"*\"}";
         ReflectionUtils.setFieldValue(activity, "mWebRequestHandler", webrequest);
         webrequest.setReturnResponse(new HttpWebResponse(200, json, null));
@@ -492,7 +499,7 @@ public class AuthenticationActivityUnitTest extends ActivityUnitTestCase<Authent
             InvocationTargetException, NoSuchFieldException, InterruptedException {
         startActivity(intentToStartActivity, null, null);
         activity = getActivity();
-
+        
         activity.onBackPressed();
 
         assertTrue(isFinishCalled());

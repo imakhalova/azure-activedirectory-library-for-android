@@ -28,9 +28,6 @@ import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import com.microsoft.aad.adal.AuthenticationConstants;
-import com.microsoft.aad.adal.AuthenticationSettings;
-
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -60,7 +57,7 @@ public class AndroidTestHelper extends InstrumentationTestCase {
 
         // ADAL is set to this signature for now
         PackageInfo info = getInstrumentation().getContext().getPackageManager()
-                .getPackageInfo("com.microsoft.aad.testapp", PackageManager.GET_SIGNATURES);
+                .getPackageInfo("com.microsoft.aad.adal.testapp", PackageManager.GET_SIGNATURES);
         for (Signature signature : info.signatures) {
             testSignature = signature.toByteArray();
             MessageDigest md = MessageDigest.getInstance("SHA");
@@ -110,7 +107,7 @@ public class AndroidTestHelper extends InstrumentationTestCase {
 
     /**
      * just run tests and wait until finished
-     *
+     * 
      * @param signal
      * @param testCode
      * @param runOnUI

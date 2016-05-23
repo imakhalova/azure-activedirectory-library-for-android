@@ -33,9 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -49,62 +47,34 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import android.test.InstrumentationTestCase;
-import com.microsoft.aad.adal.ADALError;
-import com.microsoft.aad.adal.AuthenticationConstants;
 import com.microsoft.aad.adal.AuthenticationConstants.AAD;
-import com.microsoft.aad.adal.AuthenticationContext;
-import com.microsoft.aad.adal.AuthenticationException;
-import com.microsoft.aad.adal.AuthenticationResult;
 import com.microsoft.aad.adal.AuthenticationResult.AuthenticationStatus;
-import com.microsoft.aad.adal.AuthenticationSettings;
-import com.microsoft.aad.adal.HttpWebResponse;
-import com.microsoft.aad.adal.IJWSBuilder;
-import com.microsoft.aad.adal.IWebRequestHandler;
-import com.microsoft.aad.adal.PromptBehavior;
 
 import android.annotation.SuppressLint;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Base64;
 
-import junit.framework.Assert;
-
-import org.json.JSONException;
-
 @SuppressLint("TrulyRandom")
-public class OauthTests extends InstrumentationTestCase {
+public class OauthTests extends AndroidTestCase {
 
     private static final String TEST_RETURNED_EXCEPTION = "test-returned-exception";
 
     private static final String TEST_AUTHORITY = "https://login.windows.net/common";
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        getInstrumentation().getTargetContext().getCacheDir();
-        System.setProperty("dexmaker.dexcache", getInstrumentation().getTargetContext()
-                .getCacheDir().getPath());
-    }
-
     @SmallTest
-    public void testParseTestIdTokenPositive() throws IllegalArgumentException, ClassNotFoundException,
-            NoSuchMethodException, InstantiationException, IllegalAccessException,
-            InvocationTargetException, NoSuchFieldException, UnsupportedEncodingException {
-        TestIdToken TestIdToken = new TestIdToken();
-        Object actual = parseTestIdToken(TestIdToken.getTestIdToken());
-        assertEquals("0DxnAlLi12IvGL", ReflectionUtils.getFieldValue(actual, "mSubject"));
-        assertEquals("6fd1f5cd-a94c-4335-889b-6c598e6d8048",
-                ReflectionUtils.getFieldValue(actual, "mTenantId"));
-        assertEquals("test@test.onmicrosoft.com", ReflectionUtils.getFieldValue(actual, "mUpn"));
-        assertEquals("givenName", ReflectionUtils.getFieldValue(actual, "mGivenName"));
-        assertEquals("familyName", ReflectionUtils.getFieldValue(actual, "mFamilyName"));
-        assertEquals("emailField", ReflectionUtils.getFieldValue(actual, "mEmail"));
-        assertEquals("idpProvider", ReflectionUtils.getFieldValue(actual, "mIdentityProvider"));
-        assertEquals("53c6acf2-2742-4538-918d-e78257ec8516",
-                ReflectionUtils.getFieldValue(actual, "mObjectId"));
-        assertTrue(1387227772 == (Long) ReflectionUtils.getFieldValue(actual, "mPasswordExpiration"));
-        assertEquals("pwdUrl", ReflectionUtils.getFieldValue(actual, "mPasswordChangeUrl"));
+    public void testParseIdTokenPositive() throws UnsupportedEncodingException, AuthenticationException {
+        IdToken actual = new IdToken(Util.getIdToken());
+        assertEquals("0DxnAlLi12IvGL", actual.getSubject());
+        assertEquals("6fd1f5cd-a94c-4335-889b-6c598e6d8048", actual.getTenantId());
+        assertEquals("test@test.onmicrosoft.com", actual.getUpn());
+        assertEquals("givenName", actual.getGivenName());
+        assertEquals("familyName", actual.getFamilyName());
+        assertEquals("emailField", actual.getEmail());
+        assertEquals("idpProvider", actual.getIdentityProvider());
+        assertEquals("53c6acf2-2742-4538-918d-e78257ec8516", actual.getObjectId());
+        assertTrue(1387227772 == actual.getPasswordExpiration());
+        assertEquals("pwdUrl", actual.getPasswordChangeUrl());
     }
 
     @SmallTest
@@ -140,48 +110,51 @@ public class OauthTests extends InstrumentationTestCase {
     }
 
     @SmallTest
-    public void testParseTestIdTokenNegativeIncorrectMessage() throws IllegalArgumentException,
-            ClassNotFoundException, NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
-        String TestIdToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiJlNzBiMTE1ZS1hYzBhLTQ4MjMtODVkYS04ZjRiN2I0ZjAwZTYiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwibmJmIjoxMzc2NDI4MzEwLCJleHAiOjEzNzY0NTcxMTAsInZlciI6IjEuMCIsInRpZCI6IjMwYmFhNjY2LThkZjgtNDhlNy05N2U2LTc3Y2ZkMDk5NTk2MyIsIm9pZCI6IjRmODU5OTg5LWEyZmYtNDExZS05MDQ4LWMzMjIyNDdhYzYyYyIsInVwbiI6ImFkbWluQGFhbHRlc3RzLm9ubWljcm9zb2Z0LmNvbSIsInVuaXF1ZV9uYW1lIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29tIiwic3ViIjoiVDU0V2hGR1RnbEJMN1VWYWtlODc5UkdhZEVOaUh5LXNjenNYTmFxRF9jNCIsImZhbWlseV9uYW1lIjoiU2.";
-        Object actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
+    public void testParseIdTokenNegativeIncorrectMessage() {
+        String idToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiJlNzBiMTE1ZS1hYzBhLTQ4MjMtODVkYS04ZjRiN2I0ZjAwZTYiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwibmJmIjoxMzc2NDI4MzEwLCJleHAiOjEzNzY0NTcxMTAsInZlciI6IjEuMCIsInRpZCI6IjMwYmFhNjY2LThkZjgtNDhlNy05N2U2LTc3Y2ZkMDk5NTk2MyIsIm9pZCI6IjRmODU5OTg5LWEyZmYtNDExZS05MDQ4LWMzMjIyNDdhYzYyYyIsInVwbiI6ImFkbWluQGFhbHRlc3RzLm9ubWljcm9zb2Z0LmNvbSIsInVuaXF1ZV9uYW1lIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29tIiwic3ViIjoiVDU0V2hGR1RnbEJMN1VWYWtlODc5UkdhZEVOaUh5LXNjenNYTmFxRF9jNCIsImZhbWlseV9uYW1lIjoiU2.";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
     }
 
     @SmallTest
-    public void testParseTestIdTokenNegativeInvalidEncodedTokens() throws IllegalArgumentException,
-            ClassNotFoundException, NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
-        String TestIdToken = "..";
-        Object actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
+    public void testParseIdTokenNegativeInvalidEncodedTokens() {
+        String idToken = "..";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
 
-        TestIdToken = "sdf.sdf.";
-        actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
+        idToken = "sdf.sdf.";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
 
-        TestIdToken = "sdf.sdf.34";
-        actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
+        idToken = "sdf.sdf.34";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
 
-        TestIdToken = "dfdf";
-        actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
+        idToken = "dfdf";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
 
-        TestIdToken = ".....";
-        actual = parseTestIdToken(TestIdToken);
-        assertNull("TestIdToken is null", actual);
-    }
-
-    @SmallTest
-    private Object parseTestIdToken(String TestIdToken) throws IllegalArgumentException,
-            ClassNotFoundException, NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
-        AuthenticationRequest request = new AuthenticationRequest("http://www.something.com", "resource",
-                "client", "redirect", "loginhint@ggg.com", null, null, null);
-        Oauth2 oauth = new Oauth2(request);
-        Method m = ReflectionUtils.getTestMethod(oauth, "parseIdToken", String.class);
-        return (Object)m.invoke(oauth, TestIdToken);
+        idToken = ".....";
+        try {
+            final IdToken actual = new IdToken(idToken);
+        } catch (final Exception exception) {
+            assertTrue("argument exception", exception instanceof AuthenticationException);
+        }
     }
 
     @SmallTest
@@ -197,12 +170,12 @@ public class OauthTests extends InstrumentationTestCase {
 
         AuthenticationResult actual = (AuthenticationResult)m.invoke(oauth, "http://www.nocodeurl.com?state=YT1odHRwczovL2xvZ2luLndpbmRvd3MubmV0L2NvbW1vbiZyPWh0dHBzOi8vb2ZmaWNlYXBwcy5saXZlLmNvbQ");
         assertNull(actual);
-
+        
         actual = (AuthenticationResult)m.invoke(oauth, "http://www.nocodeurl.com?error=testerr&error_description=errtestdecription&state=YT1odHRwczovL2xvZ2luLndpbmRvd3MubmV0L2NvbW1vbiZyPWh0dHBzOi8vb2ZmaWNlYXBwcy5saXZlLmNvbQ");
         assertTrue(actual.getStatus() == AuthenticationStatus.Failed);
         assertEquals(actual.getErrorCode(), "testerr");
     }
-
+    
     @SmallTest
     public void testGetCodeRequestUrl() throws IllegalArgumentException, ClassNotFoundException,
             NoSuchMethodException, InstantiationException, IllegalAccessException,
@@ -322,7 +295,7 @@ public class OauthTests extends InstrumentationTestCase {
 
     /**
      * check message encoding issues
-     *
+     * 
      * @throws IllegalArgumentException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
@@ -364,7 +337,7 @@ public class OauthTests extends InstrumentationTestCase {
 
     /**
      * web request handler is empty.
-     *
+     * 
      * @throws IllegalArgumentException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
@@ -468,6 +441,9 @@ public class OauthTests extends InstrumentationTestCase {
             throws IllegalArgumentException, ClassNotFoundException, NoSuchMethodException,
             InstantiationException, IllegalAccessException, InvocationTargetException,
             NoSuchAlgorithmException, IOException, AuthenticationException {
+        getContext().getCacheDir();
+        System.setProperty("dexmaker.dexcache", getContext().getCacheDir().getPath());
+        
         IWebRequestHandler mockWebRequest = mock(IWebRequestHandler.class);
         KeyPair keyPair = getKeyPair();
         RSAPublicKey publicKey = (RSAPublicKey)keyPair.getPublic();
@@ -548,10 +524,9 @@ public class OauthTests extends InstrumentationTestCase {
         Object oauth = createOAuthInstance(request);
         Method m = ReflectionUtils.getTestMethod(oauth, "processTokenResponse",
                 Class.forName("com.microsoft.aad.adal.HttpWebResponse"));
-        TestIdToken defaultTestIdToken = new TestIdToken();
-        String testIdToken = defaultTestIdToken.getTestIdToken();
+        String idToken = Util.getIdToken();
         String json = "{\"id_token\":\""
-                + testIdToken
+                + idToken
                 + "\",\"access_token\":\"sometokenhere2343=\",\"token_type\":\"Bearer\",\"expires_in\":\"28799\",\"expires_on\":\"1368768616\",\"refresh_token\":\"refreshfasdfsdf435=\",\"scope\":\"*\"}";
         HttpWebResponse mockResponse = new HttpWebResponse(200, json, null);
 
@@ -562,7 +537,7 @@ public class OauthTests extends InstrumentationTestCase {
         assertEquals("Same token in parsed result", "sometokenhere2343=", result.getAccessToken());
         assertEquals("Same refresh token in parsed result", "refreshfasdfsdf435=",
                 result.getRefreshToken());
-        assertEquals("Same rawTestIdToken", testIdToken, result.getIdToken());
+        assertEquals("Same rawIdToken", idToken, result.getIdToken());
     }
 
     @SmallTest
@@ -787,5 +762,4 @@ public class OauthTests extends InstrumentationTestCase {
         KeyPair keyPair = keyGen.genKeyPair();
         return keyPair;
     }
-
 }

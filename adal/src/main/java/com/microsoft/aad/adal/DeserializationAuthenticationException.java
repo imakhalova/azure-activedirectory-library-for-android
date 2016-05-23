@@ -24,29 +24,35 @@
 package com.microsoft.aad.adal;
 
 /**
- * Index of instrumentation event IDs used for logging
+ * deserialization authentication error.
  */
-final class InstrumentationIDs {
-    /* Event invoked when refresh token request fails or successes*/
-    static final String REFRESH_TOKEN_EVENT = "RefreshToken";
+class DeserializationAuthenticationException extends AuthenticationException {
+    static final long serialVersionUID = 1;
+    final static ADALError defaultErrorCode = ADALError.INCOMPATIBLE_BLOB_VERSION;
 
-    /* Event invoked when auth token was successfully obtained */
-    static final String EVENT_RESULT_SUCCESS = "Success";
-    /* Event invoked when auth token wasn't obtained by some reason */
-    static final String EVENT_RESULT_FAIL = "Fail";
+    /**
+     * Constructs a new DeserializationAuthenticationException.
+     */
+    public DeserializationAuthenticationException() {
+        super();
+    }
 
-    /* Clarifies the cause why auth token wasn't obtained */
-    static final String REFRESH_TOKEN_NOT_FOUND = "RefreshTokenNotFound";
-    static final String AUTH_RESULT_EMPTY = "EmptyResponseFromServer";
-    static final String AUTH_TOKEN_NOT_RETURNED = "AuthTokenNotReturned";
+    /**
+     * Constructs a new DeserializationAuthenticationException with message.
+     * 
+     * @param msg Message for cancel request
+     */
+    public DeserializationAuthenticationException(String msg) {
+        super(defaultErrorCode, msg);
+    }
 
-    static final String EVENT_RESULT = "Result";
-    static final String ERROR_CLASS = "ErrorClass";
-    static final String ERROR_CODE = "ErrorCode";
-    static final String ERROR_MESSAGE = "ErrorMessage";
-    static final String USER_ID = "UserId";
-    static final String RESOURCE_ID = "ResourceName";
-    static final String CORRELATION_ID = "CorrelationId";
-    static final String AUTHORITY_ID = "Authority";
-    static final String IS_BROKER_APP = "BrokerApp";
+    /**
+     * Constructs a new DeserializationAuthenticationException with message and the cause exception
+     * @param details Details related to the error such as query string, request
+     *            info
+     * @param throwable {@link Throwable}
+     */
+    public DeserializationAuthenticationException(String msg, Throwable cause) {
+        super(defaultErrorCode, msg, cause);
+    }
 }
