@@ -52,7 +52,7 @@ public class ADALErrorTest extends InstrumentationTestCase {
 
         // ADAL is set to this signature for now
         PackageInfo info = getInstrumentation().getContext().getPackageManager()
-                .getPackageInfo("com.microsoft.aad.adal.testapp", PackageManager.GET_SIGNATURES);
+                .getPackageInfo(AuthenticationContextTest.TESTAPP_PACKAGE_NAME, PackageManager.GET_SIGNATURES);
         for (Signature signature : info.signatures) {
             testSignature = signature.toByteArray();
             MessageDigest md = MessageDigest.getInstance("SHA");
